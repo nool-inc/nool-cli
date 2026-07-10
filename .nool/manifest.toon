@@ -1,4 +1,4 @@
-intent: Replace bundled release tarballs with Nool 5.9.1 assets
-knot_id: 5359138441fbf25c8e369da28e33f3bcc8023d1c620eec36de0a45fc4f24d2b3
-solidified_at: 1782390858627
-thread: main
+intent: Create task: Bump version to 6.0.2 and build release artifacts
+knot_id: 7ac92f83ebc0558879ce4538729d90c3f968c11bd50ca3cc51021213373232e8
+solidified_at: 1783722163217
+thread: 

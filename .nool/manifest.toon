@@ -1,4 +1,4 @@
-intent: Create task: Bump version to 6.0.2 and build release artifacts
-knot_id: 7ac92f83ebc0558879ce4538729d90c3f968c11bd50ca3cc51021213373232e8
-solidified_at: 1783722163217
+intent: Create task: Implement Scripting RPC Engine
+knot_id: e25d76efb83fe7814a6ae85e40f4ca9db68196bc29d30411c960d9a5ea64d9c3
+solidified_at: 1785096784356
 thread: 

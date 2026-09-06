@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Drop stale tracked files: the 5.9.1 release archive and its checksum, dev scratch, and local agent config
-knot_id: 7b2cf75977930c806a76608b662be03941b7e7ae07fb60bc968b5d5bef1fcb46
-solidified_at: 1788711296660
+intent: Record the deletion of .claude/settings.local.json, and narrow the agent-config ignore rules to the generated files
+knot_id: ee5f0d77e437936a153a0ff2ab1cea48f1fe81dce6a7179e7633ee74da949512
+solidified_at: 1788711340555
 thread: main

@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Bring the nool-cli docs to the 7.2.0 command surface: ship the authored reference, state 7.2.0, changelog the fleet-capacity release
-knot_id: 33b16caae35b6f66a8b252a68f7dabef16ba326dd18b1234bc945a37a09e634d
-solidified_at: 1788710851258
+intent: Drop stale tracked files: the 5.9.1 release archive and its checksum, dev scratch, and local agent config
+knot_id: 7b2cf75977930c806a76608b662be03941b7e7ae07fb60bc968b5d5bef1fcb46
+solidified_at: 1788711296660
 thread: main

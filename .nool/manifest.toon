@@ -1,4 +1,7 @@
-intent: Verify done task 0e33130d
-knot_id: 021ba8a1092ef0db7df1e8af2c959a605a1be2213c93f6159829bcd098564c8c
-solidified_at: 1785097180487
-thread: 
+commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
+commit_policy_version: 1
+commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
+intent: Bring the nool-cli docs to the 7.2.0 command surface: ship the authored reference, state 7.2.0, changelog the fleet-capacity release
+knot_id: 33b16caae35b6f66a8b252a68f7dabef16ba326dd18b1234bc945a37a09e634d
+solidified_at: 1788710851258
+thread: main

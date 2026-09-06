@@ -1,7 +1,7 @@
 # Nool
 
-[![Version](https://img.shields.io/badge/version-5.9.1-blue.svg)](https://github.com/nool-dev/nool)
-[![Status](https://img.shields.io/badge/status-production-green.svg)](https://github.com/nool-dev/nool)
+[![Version](https://img.shields.io/badge/version-7.2.0-blue.svg)](https://github.com/theswiftway/nool-cli/releases/latest)
+[![Status](https://img.shields.io/badge/status-production-green.svg)](https://github.com/theswiftway/nool-cli)
 
 Nool is a version control system engineered for the era of AI-authored code. It acts as the control plane between an AI coding agent's intent and the codebase it modifies, ensuring changes are intentional, inspectable, and governed before they become canonical.
 
@@ -21,16 +21,25 @@ Nool provides agentic change control for AI coding-agent workflows:
 Git remains the ecosystem compatibility and storage layer. Nool governs the evolution of AI-authored code.
 
 ## Install
-
+**macOS**
 ```bash
-./install_tar.sh nool-5.9.1-aarch64-apple-darwin.tar.gz
-nool version
+curl -fsSL "https://www.nool.dev/nool-install.sh?utm_source=homepage&utm_medium=copy_button&utm_campaign=install" | bash
 ```
-
+**linux**
+```bash
+curl -fsSL "https://www.nool.dev/nool-install.sh?utm_source=homepage&utm_medium=copy_button&utm_campaign=install" | bash
+```
+**windows**
+```bash
+irm "https://www.nool.dev/nool-install.ps1?utm_source=homepage&utm_medium=copy_button&utm_campaign=install" | iex
+```
 ## Quick Links
 
 - [Skills.md](./Skills.md): Full CLI command reference for the installed surface.
 - [skills/nool-commands/SKILL.md](./skills/nool-commands/SKILL.md): Agent-optimized Nool skill file.
+- [skills/nool-commands/Commands.md](./skills/nool-commands/Commands.md): The same command reference, alongside the skill so an agent can load both.
+- [CHANGELOG.md](./CHANGELOG.md): What changed in each release.
+- [Releases](https://github.com/theswiftway/nool-cli/releases): Signed archives for macOS, Linux (glibc/musl) and Windows, each with a `.sha256`.
 - [docs/index.html](./docs/index.html): Static documentation landing page.
 
 ## Adopting Nool as Your VCS
@@ -55,7 +64,7 @@ nool status --compact
 nool discover features
 nool announce intent --intent "Refine command documentation"
 nool work start --intent "Refresh docs from installed CLI"
-nool task create --name "Update docs for Nool 5.9.1" --solidify
+nool task create --name "Update docs for Nool 7.2.0" --solidify
 nool propose --all --intent "Refresh docs from installed CLI" --fast
 nool solidify
 ```
@@ -152,14 +161,14 @@ nool apply --plan-id <plan_id>
 - `nool inquiry`: Inspect the Inquiry Tree of directions, evidence, and distilled insights.
 - `nool council`: Run the configured multi-model council over the working-tree diff.
 - `nool agent`: Inspect declarative agent specs.
-- `nool fleet`: Plan and run fleets of sovereign agents over a goal.
+- `nool fleet`: Plan and run fleets of sovereign agents over a goal; `nool fleet capacity` reports how wide this machine and budget allow, and which limit binds.
 - `nool harness`: Report health of the swappable model backends.
 - `nool soul`: Create and manage persistent model personas.
 - `nool enrich`: Recall knowledge for a query and perform bounded enrichment on misses.
 
 ## Notes
 
-- Verified against the installed CLI on this machine: `Nool CLI v5.9.1`.
+- Verified against the installed CLI on this machine: `Nool CLI v7.2.0`.
 - `nool checkpoint` is the primary release-label command; `nool release` remains a backward-compatible alias.
 - The current quick-start path is `status --compact -> discover features -> announce intent -> work start -> task create -> propose -> solidify`.
 - For agent workflows, prefer `--compact` on `status`, `log`, `dag`, and `plan status`.

@@ -1,7 +1,7 @@
 # Nool CLI Project Guide
 
 **Project**: Nool Operational Continuity Infrastructure  
-**Current Version**: v3.2.0 — synced to the installed `nool` CLI surface.  
+**Current Version**: v7.2.0 — synced to the installed `nool` CLI surface.  
 **Repository Type**: CLI source checkout  
 **MCP Server**: Nool MCP (nool-mcp) — installed locally
 
@@ -31,6 +31,50 @@ When working in this project, refer to:
 2. **SKILL.md** for quick syntax lookup
 3. Run `nool --help` for real-time command reference
 4. Run `nool quick-start` for interactive guidance
+
+---
+
+## ✨ v7.2.0 Features: Fleet Capacity & Admission Control
+
+A fleet used to launch a fixed number of agents regardless of what the host could carry. It now measures.
+
+### Width sizes itself to the machine
+`--width` takes an integer or `auto`, and defaults to `auto`. Precedence is `--width` > `[fleet] width` > `auto`.
+
+```bash
+# How wide can this machine and budget actually go, and what binds it?
+nool fleet capacity
+
+# Plan a fleet; auto is the default ceiling
+nool fleet plan --task <id>=<paths> --width auto
+```
+
+`auto` is the minimum of four probes: usable cores (minus `[fleet] reserved_cpus`), available memory over `memory_per_agent_mb`, the provider rate limit, and the remaining `budget_usd_per_day` over the builder's `per_run_usd`. Whichever binds is named, so the number is actionable — a width of 3 means something different when memory bound it than when CPU did.
+
+The JSON key differs by command: `fleet capacity --json` reports `binding` alongside each probe (`cpu_width`, `memory_width`, `rate_width`, `budget_width`); `fleet plan --json` carries the same decision as `width_decision`.
+
+A pinned integer is used verbatim and is *reported* when it exceeds what the host can carry, but it does **not** raise admission.
+
+### Admission, stagger, and the cost of an agent
+- Capacity is re-measured **before every wave**, because memory moves while a fleet runs.
+- `[fleet] launch_stagger_ms` (default 250) rate-limits the ramp so a wave's startup allocations do not land in the same instant. A cap and a stagger solve different problems; you want both.
+- The executor declares what one unit of concurrency costs: vendor-CLI backends are subprocesses with their own Node/V8 heap (~512 MiB); the in-process `host` backend declares negligible, which removes memory from the ceiling entirely.
+
+### Provider rate limits
+Set `[fleet] provider_requests_per_minute` / `provider_tokens_per_minute` and `auto` divides them by what one agent draws. Undeclared limits do not bind — unknown is not unlimited, but throttling against a guess is worse than not throttling.
+
+```toml
+[fleet]
+width = "auto"
+reserved_cpus = 2
+memory_per_agent_mb = 512
+launch_stagger_ms = 250
+```
+
+### Also in 7.2.0
+- `nool query context` traverses structural and semantic edges, not `DependsOn` alone — a file reaches the symbols it defines by `Owns`, so a file-level query used to return the file and nothing else.
+- Entity edges are stored one row per fact: repeated discovery passes no longer inflate the graph with duplicates, and a reindex no longer drops entities it should have kept.
+- `nool admin plugin init` scaffolds against the SDK vendored in the release archive (searching upward for `sdk/`) instead of a `crates.io` dependency that cannot resolve.
 
 ---
 
@@ -356,7 +400,7 @@ echo "=== Ready to resume work ==="
 # Verify nool is installed
 nool version
 
-# Should output: Nool CLI v3.2.0
+# Should output: Nool CLI v7.2.0
 ```
 
 ### Project Setup
@@ -521,6 +565,8 @@ nool propose --fast    # Quick iterations (<5s)
 nool solidify --fast   # Fast commits
 ```
 
+`--full` is the default; `--fast` is an explicit opt-in that *defers* semantic validation rather than skipping it. Nothing settles that debt for you — run `nool validate --all` at the end of a session and before any release.
+
 **Before pushing:**
 ```bash
 nool solidify --full   # Full validation
@@ -533,7 +579,7 @@ nool push origin       # Replicate changes
 ## 📊 Repository State
 
 ### Current Version
-- **Nool**: v3.2.0
+- **Nool**: v7.2.0
 - **Last Updated**: May 24, 2026
 - **Commands Documented**: 46+ with 90+ subcommands
 
@@ -674,4 +720,4 @@ nool debug bisect --good <good> --bad <broken> --test "cargo test"
 
 ---
 
-*Last updated: May 24, 2026 for Nool CLI v3.2.0*
+*Last updated: September 6, 2026 for Nool CLI v7.2.0*

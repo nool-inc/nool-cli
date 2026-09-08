@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Claim task e7fd122e
-knot_id: e3e30f06d805936b123bf8b2c1c224ea302aa9bb4924392d73985954701eb844
-solidified_at: 1788909452694
+intent: Start task e7fd122e
+knot_id: ad7c73a28b58d36d0f2e5f01d5385e141894a8aec2ef47ee7040533c741ac215
+solidified_at: 1788909469500
 thread: editions-pricing

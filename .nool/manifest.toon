@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Create task: Make the public Community edition legally clear: licence, README, edition-aware releases
-knot_id: 639ad63b017ad69ec6c99eaff5e94d99a2ac6cbec568aa03f653ba2fe9a1d963
-solidified_at: 1788907580280
-thread: 
+intent: Create task: Add the Community Edition LICENSE and a Licensing section to README
+knot_id: e7fd122eef6dbf869be1ba4cf90f617fd96bc1f67735e8c91a152b8ca0ff14d9
+solidified_at: 1788907580382
+thread: editions-pricing

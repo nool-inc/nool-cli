@@ -1,0 +1,116 @@
+Nool Community Edition Licence
+
+Version 1.0, effective 2026-09-09
+Copyright (c) 2026 theswiftway. All rights reserved.
+
+Nool is commercial, closed-source software. This licence covers the free
+Community edition of the Nool command-line tool (the "Software") distributed
+from https://github.com/theswiftway/nool-cli and via the installers at
+https://www.nool.dev. This is not an open source licence: it grants no rights
+to the Software's source code. By installing or using the Software you agree
+to these terms. If you do not agree, do not install or use it.
+
+1. Who "we" and "you" are
+
+   "We" and "us" mean theswiftway, the publisher of Nool. "You" means the
+   individual person who installs and uses the Software.
+
+2. What you may do
+
+   We grant you a free, non-exclusive, non-transferable, revocable licence to
+   install and use the Community edition binaries for any purpose, including
+   commercial use, on these conditions:
+
+   a. One person per installation, on any number of machines that person
+      uses. If several engineers need Nool, each installs their own copy or
+      your organisation buys Team or Enterprise seats.
+   b. You may use the Software on any codebase you or your employer own or are
+      entitled to work on. Nothing here gives us any rights over your code,
+      Knots, intents or anything else you produce with the Software.
+
+3. What you may not do
+
+   Except to the extent applicable law forbids the restriction, you may not:
+
+   a. Redistribute, sell, rent, lease, lend, sublicense, host for others or
+      bundle the Software with your own product. Point people at
+      https://github.com/theswiftway/nool-cli or https://www.nool.dev instead.
+   b. Reverse engineer, decompile, disassemble or otherwise try to derive the
+      source code of the Software.
+   c. Circumvent, disable or interfere with edition limits, licence checks,
+      usage metering or any other technical measure, or help anyone do so.
+   d. Remove, obscure or alter any copyright, trademark or other notice.
+   e. Use the Software, or what you learn from it, to build, train or improve
+      a product that competes with Nool.
+   f. Use the Software in any way that breaks the law.
+
+4. Community edition limits
+
+   The Community edition is free forever. It is limited to one engineer per
+   installation and to the usage limits published at
+   https://www.nool.dev/pricing (1,000 knots a month at the date of this
+   licence). The Software enforces these limits and tells you when you reach
+   them.
+
+5. Team and Enterprise editions
+
+   The Team and Enterprise editions are not covered by this licence. They are
+   licensed under separate commercial terms at https://www.nool.dev/terms,
+   with pricing at https://www.nool.dev/pricing. Enterprise contracts include
+   third-party source escrow; the Community edition does not.
+
+6. Ownership and reserved rights
+
+   The Software is licensed, not sold. We and our licensors own the Software
+   and every copyright, trademark, patent, trade-secret and other intellectual
+   property right in it. "Nool" is our trademark. All rights not expressly
+   granted here are reserved.
+
+7. Telemetry
+
+   The Software can send anonymous, optional usage telemetry: Nool version,
+   operating system and architecture, command name, success and a coarse
+   duration bucket. It never sends source code, file paths, repository data,
+   user names or IP addresses. `nool telemetry show` prints exactly what is
+   sent; `nool telemetry disable` switches it off without affecting this
+   licence.
+
+8. No warranty
+
+   The Software is provided "as is", with all faults and without any warranty
+   of any kind, express, implied or statutory, including merchantability,
+   fitness for a particular purpose, title and non-infringement. We do not
+   promise it is error-free or uninterrupted, or that it meets your needs.
+   You use it at your own risk. Keep your own backups.
+
+9. Limitation of liability
+
+   To the fullest extent the law allows, we are not liable for any indirect,
+   incidental, special, consequential or punitive damages, or for any loss of
+   data, code, profits, revenue or business, arising from this licence or the
+   Software, however caused and even if we were told it might happen. Our
+   total liability to you for all claims together will not exceed one hundred
+   United States dollars (USD 100). Where the law does not allow one of these
+   limits, it applies only as far as the law permits.
+
+10. Termination
+
+   This licence ends automatically, without notice, if you break any of its
+   terms. You may end it at any time by uninstalling the Software
+   (`nool uninstall`). When it ends you must stop using the Software and
+   delete every copy you hold. Sections 6 and 8 to 11 survive termination.
+
+11. Governing law and venue
+
+   [governing law and venue to be inserted by counsel]
+
+   Publisher: replace the bracketed line above before the next release.
+
+12. Whole agreement
+
+   This licence is the whole agreement between you and us about the Community
+   edition and replaces any earlier understanding. If any part is found
+   unenforceable, the rest stays in force. Not enforcing a term is not a
+   waiver of it.
+
+Licensing questions: https://www.nool.dev/contact

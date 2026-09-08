@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Start task e7fd122e
-knot_id: ad7c73a28b58d36d0f2e5f01d5385e141894a8aec2ef47ee7040533c741ac215
-solidified_at: 1788909469500
+intent: Add the Nool Community Edition Licence and a README Licensing section stating Nool is commercial software with a free-forever Community edition, a self-serve Team edition and escrow-backed Enterprise contracts; fix badge links; ignore agent hook dirs (task e7fd122e)
+knot_id: 9721dbfd3a1dd595f63acd8617c4a7b2df2bf34dc4d83270b2819820ea2a367e
+solidified_at: 1788909484422
 thread: editions-pricing

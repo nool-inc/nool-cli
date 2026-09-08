@@ -5,7 +5,7 @@
 
 Nool is a version control system engineered for the era of AI-authored code. It acts as the control plane between an AI coding agent's intent and the codebase it modifies, ensuring changes are intentional, inspectable, and governed before they become canonical.
 
-Get started for free with the trial: **2,000 knots or 30 days**, whichever expires first.
+Get started with the free Community edition: 1,000 knots a month, one engineer, no card, no signup.
 
 ## Core Capabilities
 
@@ -33,6 +33,14 @@ curl -fsSL "https://www.nool.dev/nool-install.sh?utm_source=homepage&utm_medium=
 ```bash
 irm "https://www.nool.dev/nool-install.ps1?utm_source=homepage&utm_medium=copy_button&utm_campaign=install" | iex
 ```
+## Licensing
+
+Nool is commercial software. Community is free forever. Enterprise contracts include source escrow, so if Nool ever stops trading or stops supporting the product, you receive the source.
+
+- **Community** (this download): free forever. One engineer, 1,000 knots a month, core VCS, semantic intelligence and tasks. Governed by [LICENSE](./LICENSE).
+- **Team**: $49 per engineer per month billed annually ($59 monthly), 3-50 seats. Self-serve at https://www.nool.dev/pricing, 30-day trial without a card.
+- **Enterprise**: from $89 per engineer per month billed annually, 50-seat minimum. Source escrow, offline and air-gapped licences. Contact sales at https://www.nool.dev/contact.
+
 ## Quick Links
 
 - [Skills.md](./Skills.md): Full CLI command reference for the installed surface.

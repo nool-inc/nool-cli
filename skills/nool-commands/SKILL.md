@@ -28,6 +28,16 @@ When unsure of flags or subcommands, run `nool <command> --help` — the CLI is 
 - **Thread** = intent grouping across Knots. **Task** = tracked unit of work.
 - **Souls / agents / fleets** = the v5.0 metaharness: persistent personas and swarms of sovereign agents that run bounded, journaled, budget-gated work over a goal.
 
+## Editions and exit code 4
+
+Nool ships as three binaries built from one source, all named `nool`: **Community** (free forever, 1,000 knots per rolling month, single seat), **Team** (fleets, council, steer, playbooks, announce/leases, personas, eval, PR summaries, exploration, GitHub/Jira import, MCP handoff) and **Enterprise** (Team plus workspace roll-ups, audit, commit templates, governance packs, contracts, plugin install, `console --serve`, air-gapped `nool.lic`). `nool version` and `nool status` print the edition.
+
+- A lower edition answers a higher edition's command with an upgrade hint and **exit 4** (`unavailable`), never a clap usage error: `nool fleet plan` on Community prints ``fleet` is in Nool Team → nool admin account trial · nool.dev/pricing``. With `--json` the denial is `{"outcome":"unavailable","reason_code":"EDITION_REQUIRED",…}`.
+- Team and Enterprise binaries are **lease-gated**: without a valid lease their command groups exit 4 with `reason_code: LEASE_REQUIRED`, while `status`, `log`, `task`, `thread`, `propose`, `solidify` and every other single-player command keep working in every edition. Activate with `nool admin account activate <key>`, start a 30-day Team trial with `nool admin account trial`, switch binaries with `nool upgrade --edition team|enterprise`.
+- A revoked lease degrades the account to Community; nothing is hard-blocked. A lease bound to a device (`device_id`) verifies only on that machine.
+
+Treat 4 like 2 and 3: retrying unchanged never helps — activate a lease, or install the edition that carries the command.
+
 ## The golden path (agent commit flow)
 
 Run these in order to land a change:
@@ -109,7 +119,8 @@ nool task mine                        # active tasks assigned to or created by m
 nool task pick --id <id> [--solidify] # claim a task
 nool task start --id <id>             # Claimed → InProgress
 nool task qa --id <id>                # InProgress → InReview (submit for QA; criteria verified here)
-nool task finish --id <id> --solidify # mark done (advisory unless criteria review is required)
+nool task finish --id <id> --landed-knot <knot> -s   # mark done (advisory unless criteria review is required)
+nool task finish --id <id> --landed-knot <knot> --through   # from Open/Claimed/Blocked: pick+start land first, one command
 nool task verify-done --id <id>       # mark verified-done directly from any active state
 nool task block --id <id>             # record a blocker
 nool task show --id <id>              # quickest next step after any task change
@@ -398,6 +409,7 @@ nool debug bisect                 # binary-search which Knot introduced a regres
 nool debug blast-radius <path>    # downstream impact / risk analysis for a file or knot
 nool doctor                       # repo health + release-readiness
 nool doctor --strict              # treat warnings as release-blocking
+nool doctor --traceability --since 7d [--strict]   # every landed knot in the window: intent ✓ test note ✓ gate ✓ (exit 2 with --strict otherwise)
 nool doctor --fix [--git-fallback]   # auto-repair issues where possible (recovery)
 nool doctor --fix --heads-only        # consolidate fragmented DAG heads only; skip pruning replay-rejected knots
 ```

@@ -10,6 +10,10 @@ This document is a command reference for the Nool CLI, organized by skill catego
 
 Many commands also accept `--json` for machine-readable output (e.g. `status`, `log`, `propose`, `doctor`, `task list`). Run `nool <command> --help` any time you need exact flags.
 
+**Exit codes** (every command): `0` ok · `1` error (escalate) · `2` blocked (change the content, retry) · `3` conflict (back off, retry unchanged) · `4` unavailable (the command is in a higher edition, or this edition's lease is missing — activate or upgrade). `nool doctor` keeps its own documented codes.
+
+**Editions**: the same source builds a Community, a Team and an Enterprise `nool`. Commands marked *[Team]* or *[Enterprise]* below exist only in that edition and above; a lower edition prints the upgrade hint and exits 4, and the Team/Enterprise binaries verify a lease before running them (`nool admin account trial`, `nool admin account activate <key>`, `nool upgrade --edition team|enterprise`). Team: `agent`, `announce`, `council`, `eval`, `explore`/`inquiry`, `fleet`, `order`/`flow`, `harness`, `msg`, `persona`/`soul`, `playbook`, `pr`, `review`, `steer`, `task list-github|import-github|list-jira|import-jira`. Enterprise: `audit`, `commit-template`, `workspace`, `admin pack|contract`, `admin plugin install`, `console --serve`.
+
 ---
 
 ## 1. Initialize & Bootstrap
@@ -184,6 +188,8 @@ Release-readiness and repository health checks.
 - `--fix [--git-fallback]`: auto-repair issues where possible.
 - Scope: `--fs-only`, `--semantic-only`, `--artifacts`, `--architecture`; add `--json` for automation.
 - `--fix --heads-only`: only consolidate fragmented DAG heads into one merge knot, skipping the prune of replay-rejected knots. Use this when the rejected set is large enough that a blanket prune would delete real, still-referenced history (e.g. active tasks).
+
+- `--traceability [--since <n>d|h|m|s] [--strict] [--json]` — governance report over the landed work knots in the window: each one's intent, test note, gate verdict and trusted attestations. Exit 2 with `--strict` when any knot lacks an intent or test note or carries a failed attestation. Streams the ledger from the window start, so it is cheap on large repositories.
 
 ### `nool verify`
 Run structural invariants against the current or planned state.

@@ -21,6 +21,9 @@ Nool provides agentic change control for AI coding-agent workflows:
 Git remains the ecosystem compatibility and storage layer. Nool governs the evolution of AI-authored code.
 
 ## Install
+
+Every installer below puts the **Community** edition on your PATH: free forever, one engineer, 1,000 knots a month, no email and no card. The binary is called `nool` in every edition; `nool version` prints which one you have.
+
 **macOS**
 ```bash
 curl -fsSL "https://www.nool.dev/nool-install.sh?utm_source=homepage&utm_medium=copy_button&utm_campaign=install" | bash
@@ -33,6 +36,22 @@ curl -fsSL "https://www.nool.dev/nool-install.sh?utm_source=homepage&utm_medium=
 ```bash
 irm "https://www.nool.dev/nool-install.ps1?utm_source=homepage&utm_medium=copy_button&utm_campaign=install" | iex
 ```
+
+Release archives are named `nool-<version>-community-<target>.tar.gz` (`.zip` on Windows) and ship with a `.sha256` next to each archive plus a signed `SHA256SUMS` manifest; the installer verifies both before extracting. Team and Enterprise archives follow the same naming (`-team-`, `-enterprise-`) but are not published here: the licence hub serves them to subscribers.
+
+### Upgrading to Team or Enterprise
+
+A Community binary answers Team and Enterprise commands (`nool fleet`, `nool announce`, `nool workspace`, ...) with an upgrade hint and **exit code 4**; nothing else changes. To move up:
+
+```bash
+nool admin account trial                  # 30-day Team trial, no card: a lease arrives by email
+nool admin account activate <key>         # activate a purchased Team or Enterprise lease
+nool upgrade --edition team               # download and install the Team binary for your platform
+nool upgrade --edition enterprise         # same for Enterprise (contract customers)
+```
+
+Leases are signed tokens that verify offline; the hub only issues and renews them. When a Team lease lapses the binary degrades to Community rather than locking you out. Buy Team seats at https://www.nool.dev/pricing; Enterprise is by contract at https://www.nool.dev/contact.
+
 ## Licensing
 
 Nool is commercial software. Community is free forever. Enterprise contracts include source escrow, so if Nool ever stops trading or stops supporting the product, you receive the source.

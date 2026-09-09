@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Explain the editions in the public README and resync the agent skill copies (tasks 00da06fc, 639ad63b; goal ship-community-team-enterprise-editions). Why: the install section handed out the Community binary without saying so, and gave no path to Team or Enterprise. What: the Install section now names the edition every installer delivers, the archive naming (nool-<version>-community-<target> with .sha256 and the signed SHA256SUMS manifest the installer verifies), and an Upgrading section with nool admin account trial, nool admin account activate <key> and nool upgrade --edition team|enterprise, exit code 4 for higher-edition commands, offline lease verification and the degrade-to-Community rule. Skills.md and skills/nool-commands/{SKILL,Commands}.md are byte-for-byte copies of Nool/skills/nool-commands at the editions knot (One identity, exit 4, --through, --traceability).
-knot_id: a916ded1f3f411b941ad3ef7bb35595c95ae3f9f6e4e3cc5345a3249ed203d02
-solidified_at: 1788982756625
-thread: main
+intent: Review acceptance criteria for task e7fd122e
+knot_id: a3776775a239669ee457062cf078d2915386c8b8cf4454326e154271c2d04e53
+solidified_at: 1788983749552
+thread: editions-pricing

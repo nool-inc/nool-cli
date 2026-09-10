@@ -4,6 +4,28 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.3.0] - 2026-09-10
+
+Binaries: https://github.com/theswiftway/nool-cli/releases/tag/v7.3.0
+
+The Community / Team / Enterprise split. This is the first release whose
+archives carry the edition in the name: `nool-7.3.0-community-<target>`.
+
+### Added
+- **Three editions from one source.** Community (free forever, 1,000 knots a rolling month, one seat, one device), Team (fleets, council, steer, playbooks, announce/leases, personas, eval, PR summaries, exploration, GitHub/Jira import, MCP handoff) and Enterprise (Team plus workspace roll-ups, audit, commit templates, governance packs, contracts, plugin install, `console --serve`, air-gapped `nool.lic`). The paid surface is compiled out of Community, not switched off at runtime.
+- **`nool version` and `nool status` name the edition** you are running.
+- **Exit code 4 with an upgrade hint** instead of a usage error. `nool fleet` on Community prints ``fleet` is in Nool Team → nool admin account trial · nool.dev/pricing`; `--json` gives `{"outcome":"unavailable","reason_code":"EDITION_REQUIRED",…}`. Retrying unchanged never helps — treat 4 like 2 and 3.
+- **`nool admin account trial [--email]`** takes an OTP-verified 30-day Team lease; **`nool admin team invite <email>`** and **`nool admin team list`** manage seats against the limit you bought (the hub returns 409 at N+1); **`nool upgrade --edition team|enterprise`** swaps in the licensed binary for your platform.
+
+### Changed
+- **A lapsed or revoked lease degrades to Community rather than refusing to run.** Your history stays readable and your working tree stays yours; previously a revoked licence was a hard stop indistinguishable from a corrupt install. Read paths — `status`, `log`, `query`, `context`, replay, blame — are never gated in any edition, and `task`/`thread`/`admin` lost their blunt trial checks because tasks are a Community floor.
+- **A licence is bound to the machine that activated it.** Exceeding your device limit now fails activation with a clear message instead of warning and continuing.
+
+### Fixed
+- **`nool task list` no longer lists tasks replay cannot reach.** It read SQLite metadata directly while `task show`/`pick`/`cancel` resolve through the replay engine, so a repository carrying deferred history could show hundreds of tasks — some as InReview or Claimed — that then reported "Task not found".
+- **`nool doctor` separates already-deferred history from newly-rejected knots**, so a familiar warning count no longer reads as a fresh regression.
+- **`nool status` no longer advises merging a head replay will refuse.** A second head that is itself a `doctor:consolidate-heads` knot drew the generic "merge before release" line; merging it again only produces another rejected knot.
+
 ## [7.2.0] - 2026-09-06
 
 Binaries: https://github.com/theswiftway/nool-cli/releases/tag/v7.2.0

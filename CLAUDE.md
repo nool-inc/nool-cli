@@ -1,7 +1,7 @@
 # Nool CLI Project Guide
 
 **Project**: Nool Operational Continuity Infrastructure  
-**Current Version**: v7.2.0 — synced to the installed `nool` CLI surface.  
+**Current Version**: v7.3.0 — synced to the installed `nool` CLI surface.  
 **Repository Type**: CLI source checkout  
 **MCP Server**: Nool MCP (nool-mcp) — installed locally
 
@@ -31,6 +31,21 @@ When working in this project, refer to:
 2. **SKILL.md** for quick syntax lookup
 3. Run `nool --help` for real-time command reference
 4. Run `nool quick-start` for interactive guidance
+
+---
+
+## ✨ v7.3.0 Features: Three Editions
+
+The same source now builds three binaries, all called `nool`: **Community** (free forever, 1,000 knots a rolling month, one seat), **Team** and **Enterprise**. The paid command surface is compiled out of Community rather than switched off, so what you run is what you are licensed for. `nool version` and `nool status` name the edition.
+
+A Team or Enterprise command on a lower edition exits **4** with an upgrade hint, never a clap usage error — `nool fleet` on Community points at `nool admin account trial`. Treat 4 like 2 and 3: retrying unchanged never helps.
+
+A lapsed or revoked lease degrades to Community instead of refusing to run, and read paths (`status`, `log`, `query`, `context`, replay, blame) are never gated in any edition.
+
+### Also in 7.3.0
+- `nool admin account trial [--email]` takes an OTP-verified 30-day Team lease; `nool admin team invite` manages seats; `nool upgrade --edition team|enterprise` swaps the binary.
+- A licence is bound to the machine that activated it; exceeding the device limit fails activation rather than warning.
+- `nool task list` no longer lists tasks replay cannot reach, `nool doctor` separates already-deferred history from newly-rejected knots, and `nool status` stops advising a merge replay will refuse.
 
 ---
 
@@ -400,7 +415,7 @@ echo "=== Ready to resume work ==="
 # Verify nool is installed
 nool version
 
-# Should output: Nool CLI v7.2.0
+# Should output: Nool CLI v7.3.0 (community)
 ```
 
 ### Project Setup
@@ -579,8 +594,8 @@ nool push origin       # Replicate changes
 ## 📊 Repository State
 
 ### Current Version
-- **Nool**: v7.2.0
-- **Last Updated**: May 24, 2026
+- **Nool**: v7.3.0
+- **Last Updated**: September 10, 2026
 - **Commands Documented**: 46+ with 90+ subcommands
 
 ### Key Directories
@@ -720,4 +735,4 @@ nool debug bisect --good <good> --bad <broken> --test "cargo test"
 
 ---
 
-*Last updated: September 6, 2026 for Nool CLI v7.2.0*
+*Last updated: September 10, 2026 for Nool CLI v7.3.0*

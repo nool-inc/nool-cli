@@ -1,6 +1,6 @@
 # Nool
 
-[![Version](https://img.shields.io/badge/version-7.2.0-blue.svg)](https://github.com/theswiftway/nool-cli/releases/latest)
+[![Version](https://img.shields.io/badge/version-7.3.0-blue.svg)](https://github.com/theswiftway/nool-cli/releases/latest)
 [![Status](https://img.shields.io/badge/status-production-green.svg)](https://github.com/theswiftway/nool-cli)
 
 Nool is a version control system engineered for the era of AI-authored code. It acts as the control plane between an AI coding agent's intent and the codebase it modifies, ensuring changes are intentional, inspectable, and governed before they become canonical.
@@ -37,7 +37,7 @@ curl -fsSL "https://www.nool.dev/nool-install.sh?utm_source=homepage&utm_medium=
 irm "https://www.nool.dev/nool-install.ps1?utm_source=homepage&utm_medium=copy_button&utm_campaign=install" | iex
 ```
 
-Release archives are named `nool-<version>-community-<target>.tar.gz` (`.zip` on Windows) and ship with a `.sha256` next to each archive plus a signed `SHA256SUMS` manifest; the installer verifies both before extracting. Team and Enterprise archives follow the same naming (`-team-`, `-enterprise-`) but are not published here: the licence hub serves them to subscribers.
+Release archives are named `nool-<version>-community-<target>.tar.gz` (`.zip` on Windows) and ship with a `.sha256` next to each archive plus a run-wide `SHA256SUMS` manifest; the installer verifies the archive against its checksum before extracting. Manifest signing (`SHA256SUMS.minisig`) is not yet enabled — until it is, verify over HTTPS from this page. Team and Enterprise archives follow the same naming (`-team-`, `-enterprise-`) but are not published here: the licence hub serves them to subscribers.
 
 ### Upgrading to Team or Enterprise
 
@@ -91,7 +91,7 @@ nool status --compact
 nool discover features
 nool announce intent --intent "Refine command documentation"
 nool work start --intent "Refresh docs from installed CLI"
-nool task create --name "Update docs for Nool 7.2.0" --solidify
+nool task create --name "Update docs for Nool 7.3.0" --solidify
 nool propose --all --intent "Refresh docs from installed CLI" --fast
 nool solidify
 ```
@@ -195,7 +195,7 @@ nool apply --plan-id <plan_id>
 
 ## Notes
 
-- Verified against the installed CLI on this machine: `Nool CLI v7.2.0`.
+- Verified against the installed CLI on this machine: `Nool CLI v7.3.0`.
 - `nool checkpoint` is the primary release-label command; `nool release` remains a backward-compatible alias.
 - The current quick-start path is `status --compact -> discover features -> announce intent -> work start -> task create -> propose -> solidify`.
 - For agent workflows, prefer `--compact` on `status`, `log`, `dag`, and `plan status`.

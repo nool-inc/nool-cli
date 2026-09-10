@@ -1,7 +1,13 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Block task 00da06fc: Docs landed in knot da45c64c; the GitHub release itself (community tarballs for every target with .sha256 and SHA256SUMS.minisig) needs the release workflow to run with the minisign key and the KMS v2 public key in LICENSE_KEYRING.
-knot_id: 1a74bdcbb0806538586582569377642b3b29c44f764d05ed9eec4fe86d340743
-solidified_at: 1788983750246
-thread: editions-pricing
+intent: Document the 7.3.0 Community release in the distribution repo.
+
+Reasoning: this repo is the public face of a closed engine -- its README is what a first-time installer reads and its GitHub releases are what nool.dev/artifacts redirects to -- so it has to describe 7.3.0 before the release lands, not after. The edition prose was already correct from the wave-3 docs knot; what was stale was every version string and one security claim.
+
+Justification: bumps the version badge, the verified-CLI line and the docs/index.html softwareVersion to 7.3.0, and re-syncs Skills.md and skills/nool-commands from Nool/skills so all four copies are identical again. Adds the 7.3.0 changelog entry (edition split, exit-4 upgrade hints, trial/invite/upgrade commands, degrade-on-lapse, device binding, and the task/doctor/status replay-reachability fixes). CLAUDE.md gains a v7.3.0 section ahead of the 7.2.0 one rather than renaming it, since that section documents 7.2.0's fleet work and is still true.
+
+Corrects README's archive paragraph, which promised 'a signed SHA256SUMS manifest'. No minisign key exists yet, so 7.3.0 ships an unsigned manifest; the README now says so and points at HTTPS as the trust boundary. Overstating a signature is the wrong direction to be wrong in, and task 00da06fc stays blocked on the key rather than being quietly satisfied by prose.
+knot_id: 69d4b54861e27fa7e55bbaf4c328adfbbeee75cad23b6b088f8914657fffb25a
+solidified_at: 1789002200378
+thread: main

@@ -1,18 +1,18 @@
 ---
 name: nool-commands
-description: Comprehensive expert guidance for the Nool CLI (v7.2.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, and multi-agent coordination. Optimized for AI coding agents.
+description: Comprehensive expert guidance for the Nool CLI (v7.3.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, and multi-agent coordination. Optimized for AI coding agents.
 license: Apache-2.0
 metadata:
-  version: "7.2.0"
+  version: "7.3.0"
   author: nool-core-team
-compatibility: Requires nool CLI v7.2.0+
+compatibility: Requires nool CLI v7.3.0+
 allowed-tools: bash(nool *)
 ---
 
 
 # Nool CLI
 
-Nool is a Semantic-Agentic Commutative VCS (currently **v7.2.0**). The source of truth is the **Knot DAG**, not text.
+Nool is a Semantic-Agentic Commutative VCS (currently **v7.3.0**). The source of truth is the **Knot DAG**, not text.
 
 **When this applies:** any project tracked by Nool — confirm with `nool status`. Note that the presence of a `.nool/` directory alone is *not* proof: `~/.nool` is the machine-level identity/config dir (`config.toml`, `identity.key`), and tooling can create a bare `.nool/` as a side effect of writing a log there. A real ledger contains artifacts like `knots/`, `nool.db`, `manifest.toon`/`manifest.json`, `git_mirror/`, or `memory/`. When scripting a check, look for one of those, not just the directory. In such a project, **use `nool` for VCS, task management, and debugging** instead of raw `git`. In a repo with no `.nool/`, use git normally (or `nool init` to start tracking). Nothing here is specific to one repository — it is the general workflow for working in any Nool-tracked codebase, in any language.
 

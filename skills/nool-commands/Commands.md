@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.2.0
+**Version**: 7.3.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -576,4 +576,4 @@ Uninstall the Nool CLI and remove local identity keys.
 
 ---
 
-*Last updated: September 6, 2026 for Nool v7.2.0*
+*Last updated: September 10, 2026 for Nool v7.3.0*

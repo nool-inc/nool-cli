@@ -1,7 +1,7 @@
 # Nool CLI Project Guide
 
 **Project**: Nool Operational Continuity Infrastructure  
-**Current Version**: v7.3.0 — synced to the installed `nool` CLI surface.  
+**Current Version**: v7.5.0 — synced to the installed `nool` CLI surface.  
 **Repository Type**: CLI source checkout  
 **MCP Server**: Nool MCP (nool-mcp) — installed locally
 
@@ -31,6 +31,25 @@ When working in this project, refer to:
 2. **SKILL.md** for quick syntax lookup
 3. Run `nool --help` for real-time command reference
 4. Run `nool quick-start` for interactive guidance
+
+---
+
+## ✨ v7.5.0 Features: A Symbol-Granular Dependency Graph
+
+The dependency graph is maintained at the seal and is symbol-granular. Sealing a file re-parses it and reconciles the facts it contributes: the file `Owns` each definition it holds, `Uses` the specific definitions it names in the files it imports, and a trait, interface or base-class method `Calls` the same-named method of every type that implements or extends it. `nool query context <path>` therefore reaches the symbols an agent actually asks about, and the consumers of one symbol are separable from the consumers of another in the same file.
+
+```bash
+nool debug blast-radius --symbol Util          # consumers of Util, not every importer of its file
+nool debug blast-radius --symbol src/a.rs#Util # anchor on one declaring file
+nool admin reindex-graph                       # the per-file seal pass run over the whole tree
+```
+
+Blast radius now reports the dependents closure rather than everything that landed later, and names the knots that touch nothing the target reaches. Symbol facts are derived for every built-in code language (Go same-package, Swift same-module, Elixir `alias`, Erlang `-import`); config and markup formats keep file-level entities only.
+
+### Also in 7.5.0
+- A proposal admitted under `--as-agent <label>` no longer seals through a lease announced under a different label on the same file: a declared label owns only itself (plus the environment's label when set).
+- `nool query context` on a target nothing resolves to says so and exits non-zero instead of printing an empty body; `nool query materialize` prints every file of a multi-file knot.
+- Releases ship a minisign-signed `SHA256SUMS`; the installers verify it against the pinned Nool public key when `minisign` is present (`NOOL_REQUIRE_SIGNATURE=1` makes it mandatory). 7.5.0 supersedes 7.4.0, whose archives were built but never released.
 
 ---
 

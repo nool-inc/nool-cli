@@ -4,6 +4,31 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.5.0] - 2026-09-14
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.5.0
+
+The dependency graph becomes current and symbol-granular. Supersedes 7.4.0,
+whose archives were built but never released; its minisign pinning ships here.
+
+### Added
+- **A symbol-granular entity graph, maintained at the seal.** One sealed file is one unit of work: its content is re-parsed and the facts it contributes are reconciled against the graph. A file `Owns` each definition it holds, `Uses` the specific definitions it names in the files it imports, and an interface or base-class method `Calls` the same-named method of every implementing type. `nool query context <path>` reaches the symbols an agent actually asks about.
+- **`nool debug blast-radius --symbol <name>`** lists the consumers of that one symbol rather than every importer of the file that declares it; `--symbol path#Name` anchors on one declaring file. A file the graph holds no symbol-level facts for falls back to file-level dependents and says so.
+- **Symbol facts for every built-in code language.** Go same-package references, Swift same-module types, Elixir `alias` and Erlang `-import` / `mod:fun()` now produce edges, with exact-case probes on case-insensitive filesystems. Config and markup formats keep their file entity and import edges and contribute no symbols.
+
+### Changed
+- **Blast radius reports the dependents closure, not everything that landed later.** In a linear timeline the raw causal set was simply all subsequent history. Descendants are now narrowed to the knots touching the target or one of its dependents; the rest are counted and named as such.
+- **A full graph rebuild is the per-file seal pass run over the tree.** `nool admin reindex-graph`, `nool init` and standalone `nool solidify` derive the same facts the seal does and retire what deleted files left behind, so an incrementally maintained graph and a rebuilt one agree.
+
+### Fixed
+- **The seal did not fence a sibling label's lease.** A proposal admitted under `--as-agent me` sealed straight through a lease announced as `--agent-id other` on the same file. A declared label now owns only itself, plus the environment's label when one is set.
+- **Edges an edit removed survived until the next full rebuild.** A dropped import, a deleted definition and a retargeted `impl` now leave the graph with the knot that removed them, their history interval closed so an as-of query still sees them where they were true.
+- **`nool query context` presented an echoed heading as a result.** An unresolvable target now says so and exits non-zero unless `--skeleton` or `--include-runtime` can answer from the file or the knot itself.
+- **`nool query materialize` printed a bare header for any multi-file knot.** Every file of a Synthesis knot is now printed, and a knot carrying no file content says so.
+
+### Distribution
+- Community archives are published on `nool-inc/nool-cli` from 7.3.0 on; www.nool.dev/artifacts routes by version. Every release carries `SHA256SUMS` and `SHA256SUMS.minisig` (public key `RWT0vGBCEIz27HfLSal/dVFhklQJmgDGIIA9mq9O7MhtUdSiawHtyn9J`).
+
 ## [7.3.0] - 2026-09-10
 
 Binaries: https://github.com/theswiftway/nool-cli/releases/tag/v7.3.0

@@ -1,6 +1,6 @@
 # Nool
 
-[![Version](https://img.shields.io/badge/version-7.3.0-blue.svg)](https://github.com/theswiftway/nool-cli/releases/latest)
+[![Version](https://img.shields.io/badge/version-7.5.0-blue.svg)](https://github.com/nool-inc/nool-cli/releases/latest)
 [![Status](https://img.shields.io/badge/status-production-green.svg)](https://github.com/theswiftway/nool-cli)
 
 Nool is a version control system engineered for the era of AI-authored code. It acts as the control plane between an AI coding agent's intent and the codebase it modifies, ensuring changes are intentional, inspectable, and governed before they become canonical.
@@ -91,7 +91,7 @@ nool status --compact
 nool discover features
 nool announce intent --intent "Refine command documentation"
 nool work start --intent "Refresh docs from installed CLI"
-nool task create --name "Update docs for Nool 7.3.0" --solidify
+nool task create --name "Update docs for Nool 7.5.0" --solidify
 nool propose --all --intent "Refresh docs from installed CLI" --fast
 nool solidify
 ```

@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Release: 7.3.0
-knot_id: 8e4cd6211d40840dd689a670a3bbe01e6935cbc74d2c4d96534a69e3ec6d68ec
-solidified_at: 1789002389244
-thread: 
+intent: Document the 7.5.0 Community release in the distribution repo: CHANGELOG [7.5.0] entry (symbol-granular entity graph at the seal, --symbol blast radius, all-language symbol facts, dependents-closure blast radius, sibling-label lease fencing, unresolved-context and materialize fixes; supersedes the unreleased 7.4.0), a v7.5.0 features section in CLAUDE.md, the --symbol flag in Skills.md and SKILL.md, and the version stamps in README (badge now points at nool-inc/nool-cli releases), Skills.md, SKILL.md frontmatter and docs/index.html softwareVersion
+knot_id: 990f150f6649349b2fc6a77cae62656622ed4485002dbe89d6fbc9d8d9acffc4
+solidified_at: 1789344229528
+thread: main

@@ -1,11 +1,11 @@
 ---
 name: nool-commands
-description: Comprehensive expert guidance for the Nool CLI (v7.3.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, and multi-agent coordination. Optimized for AI coding agents.
+description: Comprehensive expert guidance for the Nool CLI (v7.5.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, and multi-agent coordination. Optimized for AI coding agents.
 license: Apache-2.0
 metadata:
-  version: "7.3.0"
+  version: "7.5.0"
   author: nool-core-team
-compatibility: Requires nool CLI v7.3.0+
+compatibility: Requires nool CLI v7.5.0+
 allowed-tools: bash(nool *)
 ---
 
@@ -407,6 +407,7 @@ nool debug step | diff | edit | rerun   # inspect/constrain/replay specific step
 nool debug blame                  # find root cause (causal chain from a failure)
 nool debug bisect                 # binary-search which Knot introduced a regression
 nool debug blast-radius <path>    # downstream impact / risk analysis for a file or knot
+nool debug blast-radius --symbol <name>   # (7.5.0) consumers of one symbol, not every importer of its file
 nool doctor                       # repo health + release-readiness
 nool doctor --strict              # treat warnings as release-blocking
 nool doctor --traceability --since 7d [--strict]   # every landed knot in the window: intent ✓ test note ✓ gate ✓ (exit 2 with --strict otherwise)

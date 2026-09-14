@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.3.0
+**Version**: 7.5.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -504,7 +504,7 @@ Inspect, replay, and troubleshoot repository state.
 - `nool debug step | diff | edit | rerun`: inspect/constrain/replay steps.
 - `nool debug blame`: find root cause (causal chain from a failure).
 - `nool debug bisect`: binary-search which Knot introduced a regression.
-- `nool debug blast-radius <change>`: semantic blast radius and risk analysis.
+- `nool debug blast-radius <change>`: semantic blast radius and risk analysis. `--symbol <name>` (7.5.0) walks one symbol's own consumers instead of every importer of its file; `--symbol path#Name` anchors on one declaring file.
 
 ### `nool reify`
 Inspect bundles and validate syntax.

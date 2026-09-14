@@ -195,7 +195,7 @@ nool apply --plan-id <plan_id>
 
 ## Notes
 
-- Verified against the installed CLI on this machine: `Nool CLI v7.3.0`.
+- Verified against the 7.5.0 Community build: `Nool CLI v7.5.0`.
 - `nool checkpoint` is the primary release-label command; `nool release` remains a backward-compatible alias.
 - The current quick-start path is `status --compact -> discover features -> announce intent -> work start -> task create -> propose -> solidify`.
 - For agent workflows, prefer `--compact` on `status`, `log`, `dag`, and `plan status`.

@@ -434,7 +434,7 @@ echo "=== Ready to resume work ==="
 # Verify nool is installed
 nool version
 
-# Should output: Nool CLI v7.3.0 (community)
+# Should output: Nool CLI v7.5.0 (community)
 ```
 
 ### Project Setup
@@ -613,8 +613,8 @@ nool push origin       # Replicate changes
 ## 📊 Repository State
 
 ### Current Version
-- **Nool**: v7.3.0
-- **Last Updated**: September 10, 2026
+- **Nool**: v7.5.0
+- **Last Updated**: September 14, 2026
 - **Commands Documented**: 46+ with 90+ subcommands
 
 ### Key Directories
@@ -754,4 +754,4 @@ nool debug bisect --good <good> --bad <broken> --test "cargo test"
 
 ---
 
-*Last updated: September 10, 2026 for Nool CLI v7.3.0*
+*Last updated: September 14, 2026 for Nool CLI v7.5.0*

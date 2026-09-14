@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Release: 7.5.0
-knot_id: a27a95fca80fc8cb4634a5973ec38f77c5bad164e92cabcefcc8ee42297fd220
-solidified_at: 1789344434270
-thread: 
+intent: Finish the 7.5.0 version stamps the first docs knot missed: Commands.md header and last-updated line, CLAUDE.md prerequisites/repository-state/footer, README's verification note (now against the 7.5.0 Community build) and Skills.md's last-updated line
+knot_id: c53faa27d4a3845ce84680cfc37bf322877cafc9f4e0646e89687b9f8dac99b8
+solidified_at: 1789382155930
+thread: main

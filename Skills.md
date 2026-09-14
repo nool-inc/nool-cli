@@ -576,4 +576,4 @@ Uninstall the Nool CLI and remove local identity keys.
 
 ---
 
-*Last updated: September 10, 2026 for Nool v7.3.0*
+*Last updated: September 14, 2026 for Nool v7.5.0*

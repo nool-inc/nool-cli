@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.5.0
+**Version**: 7.10.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -574,6 +574,50 @@ Upgrade the Nool CLI to the latest version.
 ### `nool uninstall`
 Uninstall the Nool CLI and remove local identity keys.
 
+## 19. Coding Sessions (`nool code`)
+
+### `nool code [GOAL]`
+Run a goal as a coding session on this repository (7.9.0, Community). The model works in a `nool try` worktree under its own lease, and the session ends `Verified` only when Nool's completion check passes: a full-mode checkpoint, the affected tests run in a write/network jail, the task's acceptance criteria, and try-impact readiness. Sessions can never write `.nool/` or `.git`; raw git history verbs and state-changing `nool` verbs are refused.
+- `--exec`: headless one-shot, full-auto unless `--mode` says otherwise. Exit codes: 0 verified, 2 blocked, 3 lease conflict, 1 paused or failed.
+- `--mode suggest|auto-edit|full-auto`, `--budget <usd>`, `--max-rounds <n>`, `--profile full|bare`, `--task <id>` (its acceptance criteria join the check, and it is finished with the landed knot), `--json` (one event envelope per line), `--list` (this repo's sessions), `--serve` (the per-repo session API).
+- `--model <provider:model>` (e.g. `mistral:devstral-latest`) or a model on the backend (`anthropic/claude-sonnet-5`); `--backend openrouter|ollama|cloudflare|mistral|bedrock`. Defaults come from `nool code model set`, else `[code]` in config.
+
+### `nool code acp`
+Run Nool as an Agent Client Protocol (ACP v1) agent over stdio: JSON-RPC 2.0, one message per line (7.10.0). Editors that speak ACP run it with no other setup, e.g. Zed: `"agent_servers": {"Nool": {"command": "nool", "args": ["code", "acp"]}}`. Session steps stream as ACP updates (message and thought chunks, tool calls, plan, mode, usage); permission requests go to the editor.
+
+### `nool code provider`
+Model provider credentials (7.10.0). Providers: `openrouter`, `ollama`, `cloudflare` (Workers AI), `bedrock` (AWS), `mistral`.
+- `nool code provider list`: every provider, whether it is set up (and which variables), its default model, and where to get a key.
+- `nool code provider add <provider> [--account <id>] [--gateway <name>] [--region <region>] [--use-default-model]`: paste the key(s) when asked (hidden). Stored in `~/.nool/credentials.toml` (mode 0600); an environment variable always wins. `--account`/`--gateway` are for Cloudflare, `--region` for Bedrock.
+- `nool code provider test <provider>`: one free request with the stored credentials; reports ok or the error, never the key.
+- `nool code provider remove <provider>`: forget stored keys (environment variables are untouched).
+
+### `nool code model`
+The model the next runs use (7.10.0). `/model <name>` in a session does the same and switches the session too.
+- `nool code model list`: providers and their known models, marking the saved default and the last run's model.
+- `nool code model set <provider:model> [--repo] [--force]`: save the default (e.g. `bedrock:eu.anthropic.claude-sonnet-4-5-20250929-v1:0`). `--repo` saves it for this repository only (`.nool/code.toml`); `--force` saves a model known to lack tool calling.
+- `nool code model show`: the saved default and the model the last run used.
+
+### `nool code voice`
+Voice mode (7.10.0): speech-to-text via a local OpenAI-compatible endpoint (whisper.cpp), text-to-speech via Kokoro-82M or Speaches, with a zero-download fallback to the OS speech engine (`say` on macOS, `piper`/`espeak-ng` on Linux, `System.Speech` on Windows). Code blocks and diffs are stripped before speaking. `/voice` in a session.
+- `nool code voice doctor`: probe the configured STT/TTS endpoints and local offline engines.
+- `nool code voice setup`: instructions for downloading and running free local models.
+- `nool code voice speak "<text>" [--raw]`: speak text (`--raw` skips the sanitizing).
+- `nool code voice transcribe <file>`: transcribe a WAV, MP3, M4A or OGG file.
+- `nool code voice config [--speak off|summaries|all] [--tts-url <url>] [--stt-url <url>] [--voice <id>]`: view or change `~/.nool/code.toml` `[voice]`.
+
+### `nool code notify`
+Notifications when a session's work is done (7.10.0), configured in `~/.nool/code.toml` `[notify]` or with `/notify` in a session.
+- `nool code notify list`: every sink a session here would notify, where it comes from, and why any is skipped (URLs redacted).
+- `nool code notify add <sound|desktop|webhook|slack|discord|teams|command> [--sound <name|path>] [--url <url> | --url-env <VAR>] [--secret-env <VAR>] [--method <m>] [--header "Name: value"] [--command "<cmd>"] [--on <kinds>]`: add a sink. Chat webhook URLs are secrets: prefer `--url-env`. `--secret-env` HMAC-SHA256-signs webhook payloads; a `command` sink gets the notification JSON on stdin.
+- `nool code notify test [--sink <n>]`, `enable`, `disable`, `remove <n>`.
+
+### `nool code doctor` / `trust` / `mcp` / `plugin`
+- `nool code doctor [--all]`: every MCP server, instruction file, skill, hook, slash command and plugin a session imports, where each comes from, and what was skipped and why. `--all` also starts stdio MCP servers to list what they offer.
+- `nool code trust [--revoke]`: trust this repository so its project-level MCP servers, hooks and plugins load (they run commands).
+- `nool code mcp list|add|remove|login|logout`: the MCP catalog and your servers in `~/.nool/code.toml`; `add <name>` from the catalog or `add <name> -- <command> [args...]`; `login` signs in to an OAuth HTTP server and stores tokens in the OS credential store.
+- `nool code plugin list|add <source>|remove <name>`: Claude Code-format plugins in `~/.nool/plugins`, installed from a directory, a git URL, or a plugin already installed in Claude Code.
+
 ---
 
-*Last updated: September 14, 2026 for Nool v7.5.0*
+*Last updated: September 24, 2026 for Nool v7.10.0*

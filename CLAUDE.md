@@ -1,7 +1,7 @@
 # Nool CLI Project Guide
 
 **Project**: Nool Operational Continuity Infrastructure  
-**Current Version**: v7.5.0 — synced to the installed `nool` CLI surface.  
+**Current Version**: v7.10.0 — synced to the installed `nool` CLI surface.  
 **Repository Type**: CLI source checkout  
 **MCP Server**: Nool MCP (nool-mcp) — installed locally
 
@@ -31,6 +31,33 @@ When working in this project, refer to:
 2. **SKILL.md** for quick syntax lookup
 3. Run `nool --help` for real-time command reference
 4. Run `nool quick-start` for interactive guidance
+
+---
+
+## ✨ v7.10.0 Features: `nool code` as a Full Coding Agent
+
+`nool code` (Community, since 7.9.0) runs a goal on a model in a `nool try` worktree and lands it only when Nool's completion check passes. 7.10.0 connects it to editors, voices, more models and your notification channels.
+
+```bash
+nool code acp                                   # Agent Client Protocol v1 agent over stdio (Zed and other ACP editors)
+nool code provider add mistral                  # openrouter | ollama | cloudflare | mistral | bedrock
+nool code model set mistral:devstral-latest     # saved default model; /model switches inside a session
+nool code voice doctor                          # local STT/TTS, with an offline OS-speech fallback
+nool code notify add desktop                    # sound, desktop, webhook, Slack, Discord, Teams, command
+nool code doctor                                # what a session imports and why anything was skipped
+```
+
+- **ACP**: an editor adds `"agent_servers": {"Nool": {"command": "nool", "args": ["code", "acp"]}}`; session steps stream as ACP updates and permission requests go to the editor.
+- **Voice**: whisper.cpp for speech-to-text, Kokoro-82M or Speaches for speech, `say` / `piper` / `espeak-ng` / `System.Speech` as the zero-download fallback. Code blocks and diffs are never read aloud.
+- **Providers**: keys live in `~/.nool/credentials.toml` (0600) and an environment variable always wins; `provider test` spends one free request.
+- **MCP and plugins**: `nool code trust`, `nool code mcp` and `nool code plugin` govern which project MCP servers, hooks and Claude Code-format plugins a session loads.
+- Licences are now signed by the Nool hub, which also serves the installer: `curl -fsSL https://hub.nool.dev/install.sh | sh` (the `www.nool.dev/nool-install.sh` path still works).
+
+### Also since 7.5.0
+- **7.9.x**: `nool code --exec "<goal>"` (exit 0 verified, 2 blocked, 3 lease conflict, 1 paused or failed); `--json` on `debug blast-radius`, `try new` and `try promote`; lease holders named by agent label; `try promote` exits 3 on a merge conflict; every file of a multi-file proposal is prechecked and lease-gated; a test run that ran nothing is reported "unchecked", never a pass.
+- **7.8.x**: symbol-seeded admission control with the threatened contracts and an evidence plan in `propose --json`, per-stage `proposal_stages` timings, a resumable `nool init`, and a `nool push` that no longer stalls under steering.
+- **7.7.0**: value receipts on human terminals (agents and pipes keep the compact form; `solidify` compact is `outcome=ok knot_id=<id> title="…"`), target-scoped ghost runs with their own timeout, and a seal that trusts a recorded Full validation.
+- **7.6.0**: module-altitude architecture review, enforced `module_depends_on` / `module_must_not_depend_on` invariants, and a structural coupling metric for steering and quorum.
 
 ---
 
@@ -434,7 +461,7 @@ echo "=== Ready to resume work ==="
 # Verify nool is installed
 nool version
 
-# Should output: Nool CLI v7.5.0 (community)
+# Should output: Nool CLI v7.10.0 (community)
 ```
 
 ### Project Setup
@@ -613,8 +640,8 @@ nool push origin       # Replicate changes
 ## 📊 Repository State
 
 ### Current Version
-- **Nool**: v7.5.0
-- **Last Updated**: September 14, 2026
+- **Nool**: v7.10.0
+- **Last Updated**: September 24, 2026
 - **Commands Documented**: 46+ with 90+ subcommands
 
 ### Key Directories
@@ -754,4 +781,4 @@ nool debug bisect --good <good> --bad <broken> --test "cargo test"
 
 ---
 
-*Last updated: September 14, 2026 for Nool CLI v7.5.0*
+*Last updated: September 24, 2026 for Nool CLI v7.10.0*

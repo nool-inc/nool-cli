@@ -4,6 +4,92 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.10.0] - 2026-09-24
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.10.0
+
+`nool code` grows into a full coding agent: an Agent Client Protocol server
+for editors, voice mode, more model providers with a saved default model, and
+notifications when a session's work is done.
+
+### Added
+- **`nool code acp`: an Agent Client Protocol (ACP v1) agent** over stdio (JSON-RPC 2.0, one message per line). Editors that speak ACP, such as Zed, run Nool as an agent with no other setup: `"agent_servers": {"Nool": {"command": "nool", "args": ["code", "acp"]}}`. Session steps stream as ACP updates (message and thought chunks, tool calls, the plan, mode and usage), and permission requests go to the editor for approval.
+- **`nool code voice`: voice mode.** Speech-to-text and text-to-speech through local OpenAI-compatible endpoints (whisper.cpp for STT; Kokoro-82M or Speaches for TTS), with a zero-download fallback to the OS speech engine (`say` on macOS, `piper`/`espeak-ng` on Linux, `System.Speech` on Windows). Code blocks, diffs and formatting are stripped before anything is spoken. Verbs: `doctor`, `setup`, `speak`, `transcribe`, `config`; `/voice` in an interactive session.
+- **More model providers.** Cloudflare Workers AI, AWS Bedrock and Mistral join OpenRouter and Ollama (`--backend openrouter|ollama|cloudflare|mistral|bedrock`, or `--model provider:model`). `nool code provider add|list|test|remove` stores keys in `~/.nool/credentials.toml` (mode 0600; an environment variable always wins) and checks them with one free request.
+- **A saved default model.** `nool code model list|set|show` keeps the model the next runs use, globally or per repository (`set --repo`); `/model` switches it inside a session.
+- **Notifications.** `nool code notify list|test|enable|disable|add|remove` sends a notice when a session's work is done, to sound, desktop, webhook (optionally HMAC-signed), Slack, Discord, Teams or a shell command. Configured in `~/.nool/code.toml` `[notify]`, or `/notify` in a session.
+- **`nool code doctor`, `trust`, `mcp`, `plugin`.** See every MCP server, instruction file, skill, hook and plugin a session imports and why anything was skipped; trust a repository before its project-level MCP servers, hooks and plugins load; add catalog or custom MCP servers and sign in to OAuth ones (tokens go to the OS credential store); install Claude Code-format plugins.
+- ASCII animations for session events in the interactive view.
+
+### Changed
+- **Licences are now signed by the Nool hub**, which also serves the installers. `curl -fsSL https://hub.nool.dev/install.sh | sh` installs the Community edition alongside the existing `https://www.nool.dev/nool-install.sh`.
+
+## [7.9.2] - 2026-09-22
+
+### Fixed
+- `propose --as-agent <label>` was refused by the label's own lease on single-file proposals.
+- A multi-file proposal is now checked against other agents' leases exactly as a single-file one is.
+
+## [7.9.1] - 2026-09-22
+
+### Fixed
+- `nool code` checkpoints no longer name files `propose` refuses (a worktree's own `.nool/` state, collapsed untracked directories) in repositories whose ignore rules were never landed, and never write Python bytecode into the worktree.
+- A test run that collected nothing now reads "ran no tests: unchecked" instead of failing the completion check or minting a passing `unit-tests` attestation. Skipped checks (config files, unknown types, TypeScript without a tsconfig, Go outside a module) say "Unchecked: no tests ran".
+
+## [7.9.0] - 2026-09-22
+
+### Added
+- **`nool code`: a headless coding harness** (Community). `nool code --exec "<goal>"` runs a goal on a model through Nool's session engine in a `nool try` worktree under its own lease, and lands it only when Nool's completion check passes: a full-mode checkpoint, the affected tests run in a write/network jail, the task's acceptance criteria (`--task`), and try-impact readiness. It then promotes, records a signed `goal-complete` attestation and finishes the task. Exit codes: 0 verified, 2 blocked, 3 lease conflict, 1 paused or failed. `nool code --serve` runs the per-repo session API; `--list` lists sessions. Sessions can never write `.nool/` or `.git`, and raw git history verbs and state-changing `nool` verbs are refused.
+- `nool debug blast-radius --json`, `nool try new --json` and `nool try promote --json`.
+- **Lease holders are named.** A declared agent label is recorded with its leases: `nool announce status` shows `agent-a (1a2b3c4d)` and `nool discover conflicts` names the holder (`agent_label` in JSON).
+
+### Changed
+- `nool try promote` exits 3 on a merge conflict (`MERGE_CONFLICT`); `try discard` of a missing branch exits 1.
+- Test selection is honest: package-scoped `cargo test -p`, an explicit run-all mode for unknown footprints, and zero collected Python tests never count as a pass.
+
+### Fixed
+- `propose` prechecked only the primary file of a multi-file proposal; every file is now prechecked, and `nool query validate` exits 2 on a syntax error.
+- `nool init` no longer leaves a repository-wide lease behind when its import cannot seal (e.g. no git `user.name`/`user.email`).
+- `propose --all` kept negated ignore rules.
+
+## [7.8.1] - 2026-09-16
+
+### Fixed
+- `nool push` with steering enabled recomputed the steering rollup once per unpushed knot and could run for over an hour on a large backlog; it now computes it once per push.
+
+## [7.8.0] - 2026-09-16
+
+### Added
+- **Incremental admission control.** The propose-time gate derives the blast envelope from the affected symbols instead of loading the whole graph, reports the contracts a change threatens (asserted facts, invariants, attestation obligations, steer-sensitive paths) in `propose --json`, and resolves a deterministic evidence plan for the change. Relational invariants are scoped to the proposal's region.
+- **Per-stage timing:** `propose --json` emits `proposal_stages` with millisecond timings for each gate stage on propose and solidify.
+- **A resumable `nool init`.** Each onboarding phase records its own completion, so a killed `init` resumes where it stopped, and every phase reports progress even when output is piped.
+
+### Changed
+- `[analysis] field_signal` (default off) takes whole-graph spectral analysis off the propose path; it remains in `debug blast-radius` and `insights`.
+
+## [7.7.0] - 2026-09-15
+
+### Added
+- **Value receipts on human terminals.** `solidify`, `propose`, `try`, `work`, `task`, `checkpoint`, `blast-radius`, `doctor`, `merge`, `explain`, `insights`, `status`, `workspace` and `announce` show what landed, what it protected and what to do next. Agents, pipes and CI keep the compact form; `solidify`'s compact headline is now `outcome=ok knot_id=<id> title="…"`.
+- Ghost runs build only the test targets that hold the selected tests and have their own timeout (`NOOL_GHOST_RUN_TIMEOUT_SECS`, 600 s floor); a timeout is reported as such, not as a failing change.
+
+### Changed
+- The seal trusts a Full validation `propose` already recorded instead of re-running it, cutting a one-file full-mode knot from minutes of redundant testing.
+
+## [7.6.0] - 2026-09-14
+
+### Added
+- **Module-altitude architecture review** and **enforced module invariants:** accepted module assertions become `module_depends_on` / `module_must_not_depend_on` rules that gate proposals at the seal.
+- A structural coupling metric (cross-module dependency ratio) for steering and dynamic quorum.
+- Traceable `insights` health-grade deductions.
+
+### Changed
+- The seal graph, discovery and bootstrap skip generated, minified and vendored assets.
+- Blast radius's semantic field is computed from the entity graph.
+
+### Fixed
+- Uncommitted architecture decisions on unbound subjects no longer collide on one identity.
+
 ## [7.5.0] - 2026-09-14
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.5.0

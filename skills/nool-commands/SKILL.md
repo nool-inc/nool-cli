@@ -1,11 +1,11 @@
 ---
 name: nool-commands
-description: Comprehensive expert guidance for the Nool CLI (v7.5.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, and multi-agent coordination. Optimized for AI coding agents.
+description: Comprehensive expert guidance for the Nool CLI (v7.10.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, and multi-agent coordination. Optimized for AI coding agents.
 license: Apache-2.0
 metadata:
-  version: "7.5.0"
+  version: "7.10.0"
   author: nool-core-team
-compatibility: Requires nool CLI v7.5.0+
+compatibility: Requires nool CLI v7.10.0+
 allowed-tools: bash(nool *)
 ---
 
@@ -527,6 +527,27 @@ nool candidate clear   # drop them all
 ```
 
 `nool export` serializes non-canonical views of the semantic architecture model for external tooling: `nool export c4` (deterministic JSON, exact-level C4), `rdf` (Turtle + W3C PROV-O), `jsonld`, `cypher` (Neo4j/openCypher script), `graphml`.
+
+## Coding sessions (`nool code`, Community)
+
+`nool code` runs a goal on a model in a `nool try` worktree under its own lease and lands it only when Nool's completion check passes (full-mode checkpoint, affected tests in a jail, `--task` acceptance criteria, try-impact readiness). Sessions can never write `.nool/` or `.git`.
+
+```bash
+nool code --exec "fix the failing parser test" --task <id>   # headless; exit 0 verified, 2 blocked, 3 lease conflict, 1 paused/failed
+nool code --exec "..." --model mistral:devstral-latest --budget 2 --json
+nool code --list                                             # this repo's sessions
+
+# 7.10.0
+nool code acp                                  # ACP v1 agent over stdio for editors (Zed: {"command": "nool", "args": ["code", "acp"]})
+nool code provider add bedrock --region eu-west-1   # openrouter | ollama | cloudflare | mistral | bedrock; keys -> ~/.nool/credentials.toml
+nool code provider list | test <p> | remove <p>
+nool code model set mistral:devstral-latest [--repo]   # saved default; list | show; /model in a session
+nool code voice doctor | setup | speak "<text>" | transcribe <file> | config --speak summaries
+nool code notify add slack --url-env SLACK_WEBHOOK_URL  # sound|desktop|webhook|slack|discord|teams|command; list|test|enable|disable|remove
+nool code doctor [--all]                       # what a session imports (MCP, skills, hooks, plugins) and why anything was skipped
+nool code trust [--revoke]                     # allow this repo's MCP servers, hooks and plugins to load
+nool code mcp list|add|remove|login|logout     # nool code plugin list|add <source>|remove <name>
+```
 
 ## Other surfaces
 

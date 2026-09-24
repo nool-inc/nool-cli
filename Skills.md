@@ -582,6 +582,21 @@ Run a goal as a coding session on this repository (7.9.0, Community). The model 
 - `--mode suggest|auto-edit|full-auto`, `--budget <usd>`, `--max-rounds <n>`, `--profile full|bare`, `--task <id>` (its acceptance criteria join the check, and it is finished with the landed knot), `--json` (one event envelope per line), `--list` (this repo's sessions), `--serve` (the per-repo session API).
 - `--model <provider:model>` (e.g. `mistral:devstral-latest`) or a model on the backend (`anthropic/claude-sonnet-5`); `--backend openrouter|ollama|cloudflare|mistral|bedrock`. Defaults come from `nool code model set`, else `[code]` in config.
 
+### `nool code` sandbox and session UX
+The `shell` jail writes the worktree, the private `$TMPDIR`, per-user toolchain temp/cache dirs (Xcode DerivedData, Swift/clang module caches, `~/.dart-tool`) and a shared build cache, `~/.nool/code-cache`, that Go, npm, pip, Gradle, Maven and `XDG_CACHE_HOME` point into (7.10.0). Unix sockets work under the worktree and `$TMPDIR`, never host sockets. The completion check's test runs use the same jail.
+- `[sandbox]` in `~/.nool/code.toml` (user-level only; a repository cannot widen its own jail): `write_paths = [...]` adds writable roots, `network = "localhost"` allows loopback (the outside network stays off; on Linux the jail's own loopback only), `mode = "off"` runs commands unjailed.
+- A refused command ends with a `[sandbox]` note naming the writable roots and the setting that widens them; denials start with `denied:` and say what to do instead.
+- A plain `nool ...` line in `shell` runs as the session's agent outside the jail: reads always, other commands (`task create`, `learn`, `bug report`) by mode; commands that land or undo work (`solidify`, `try promote`, `checkpoint`, `push`) always ask.
+- `list` counts hidden entries and shows dot entries only with `hidden: true`; `grep` skips hidden tool and editor directories.
+- TUI: Tab autocompletes slash commands and their arguments (`/mode`, `/model`, `/attach` session ids, `/voice`, custom commands and skills). `/changes` (Ctrl+G) opens a change explorer: files the session edited with A/M/D, +/- counts, their checkpoint, and each file's diff.
+
+```toml
+[sandbox]
+write_paths = ["~/work/shared-fixtures"]
+network = "localhost"
+# mode = "off"
+```
+
 ### `nool code acp`
 Run Nool as an Agent Client Protocol (ACP v1) agent over stdio: JSON-RPC 2.0, one message per line (7.10.0). Editors that speak ACP run it with no other setup, e.g. Zed: `"agent_servers": {"Nool": {"command": "nool", "args": ["code", "acp"]}}`. Session steps stream as ACP updates (message and thought chunks, tool calls, plan, mode, usage); permission requests go to the editor.
 

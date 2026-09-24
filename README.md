@@ -206,6 +206,15 @@ nool apply --plan-id <plan_id>
 - `nool code voice`: Local speech-to-text and text-to-speech, with an offline OS-speech fallback.
 - `nool code notify`: Sound, desktop, webhook, Slack, Discord, Teams or command notifications when a session's work is done.
 - `nool code doctor` / `trust` / `mcp` / `plugin`: Inspect what a session imports, trust a repository's MCP servers and hooks, manage MCP servers and plugins.
+- Sandbox: a session's shell runs in a jail that already fits real toolchains (Xcode, Swift, Go, Gradle, Maven, Dart and more, with a shared build cache in `~/.nool/code-cache`). Widen it only from `~/.nool/code.toml`; a repository cannot widen its own jail, and a refusal names the setting that allows it:
+
+  ```toml
+  [sandbox]
+  write_paths = ["~/work/shared-fixtures"]   # extra writable roots
+  network = "localhost"                      # loopback only; the outside network stays off
+  # mode = "off"                             # run commands unjailed
+  ```
+- In a session: Tab autocompletes slash commands and their arguments; `/changes` (Ctrl+G) opens a change explorer with each edited file's diff. Plain `nool …` shell commands run as the session's agent, and commands that land or undo work (`solidify`, `try promote`, `checkpoint`, `push`) always ask. The `list` tool hides dot entries unless called with `hidden: true`.
 
 ## Notes
 

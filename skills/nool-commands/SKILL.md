@@ -549,6 +549,17 @@ nool code trust [--revoke]                     # allow this repo's MCP servers, 
 nool code mcp list|add|remove|login|logout     # nool code plugin list|add <source>|remove <name>
 ```
 
+Inside a session: Tab autocompletes slash commands and their arguments (`/mode`, `/model`, `/attach`, `/voice`, custom commands, skills); `/changes` (Ctrl+G) opens the change explorer (files edited with A/M/D, +/- counts, checkpoint, per-file diff). A plain `nool ...` shell line runs as the session's agent outside the jail: reads always, other commands by mode, and commands that land or undo work (`solidify`, `try promote`, `checkpoint`, `push`) always ask. `list` hides dot entries unless called with `hidden: true`.
+
+The `shell` jail already writes toolchain temp/cache dirs and a shared build cache (`~/.nool/code-cache`). Widen it only in `~/.nool/code.toml` (user-level; a repository cannot widen its own jail). A refusal ends with a `[sandbox]` note naming the setting.
+
+```toml
+[sandbox]
+write_paths = ["~/work/shared-fixtures"]   # extra writable roots
+network = "localhost"                      # loopback only; the outside network stays off
+# mode = "off"                             # run commands unjailed
+```
+
 ## Other surfaces
 
 - `nool visualize -k history|graph|roi|relational [-f tui|html]` — visualize project evolution and artifact graphs.

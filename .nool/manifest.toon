@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Fix stale 'currently v7.3.0' intro line in the published nool-commands skill; the frontmatter already says 7.10.0
-knot_id: 3c43f9d017b0c102eeb4cae1b5712267394b06875e7ef190634afac00041deba
-solidified_at: 1790211021802
+intent: Bring the 7.10.0 distribution docs up to the final nool code release: CHANGELOG gains the sandbox/tools/UX section and the licensing and installer fixes written for users; README, Skills.md, skills/nool-commands SKILL.md and Commands.md, and CLAUDE.md document the [sandbox] keys in ~/.nool/code.toml with an example, /changes (Ctrl+G) and slash autocomplete, plain nool shell commands running as the session agent with landing commands always asking, and list hiding dot entries unless hidden: true. Why: these shipped in 7.10.0 after the docs were cut, and users need the sandbox settings to unblock their toolchains. Checked nool code --help on the installed 7.10.0 binary.
+knot_id: 2e93d0c6f5cd4a462690c90ccce65537c155e8e94215b975c6356df3dfff2b32
+solidified_at: 1790222818462
 thread: main

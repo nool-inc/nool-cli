@@ -24,6 +24,23 @@ notifications when a session's work is done.
 ### Changed
 - **Licences are now signed by the Nool hub**, which also serves the installers. `curl -fsSL https://hub.nool.dev/install.sh | sh` installs the Community edition alongside the existing `https://www.nool.dev/nool-install.sh`.
 
+### `nool code`: sandbox, tools and UX
+- **Real toolchains work inside the sandbox.** A session's `shell` jail now writes the per-user temp and cache dirs your tools need (Xcode DerivedData, Swift and clang module caches, `~/.dart-tool`) and a shared, persistent build cache, `~/.nool/code-cache`, that Go, npm, pip, Gradle, Maven and `XDG_CACHE_HOME` point into. Checked against Rust, Go, Node, Bun, Python, uv, Swift, Xcode, C/C++, Java, Kotlin, Gradle, Maven, Ruby, Zig, Dart, Elixir and OpenTofu. Unix sockets work under the worktree and the private `$TMPDIR` (local test servers, a private ssh-agent), never host sockets such as Docker's. The completion check's test runs use the same jail.
+- **Choose your sandbox level** with `[sandbox]` in `~/.nool/code.toml` (user-level only; a repository cannot widen its own jail): `write_paths = [...]` adds writable roots, `network = "localhost"` allows loopback for integration tests and build daemons while the outside network stays off, and `mode = "off"` runs commands unjailed.
+- **Refusals explain themselves.** A refused command ends with a `[sandbox]` note naming the writable roots and the setting that widens them, and the TUI shows the same warning. Denials start with `denied:` and say what to do instead; the agent looks for an allowed alternative, otherwise asks for exactly what it needs and keeps working on the rest.
+- **The agent can run `nool` commands.** A plain `nool …` line in `shell` runs as the session's agent: reads always, other commands (`task create`, `learn`, `bug report`, …) by mode, and commands that land or undo work (`solidify`, `try promote`, `checkpoint`, `push`, …) always ask. Previously every state-changing nool command was refused.
+- **Nool-first orientation.** The agent reaches for Nool's context, grounding, blast-radius and findings tools before `grep`. `grep` skips hidden tool and editor directories; `list` counts hidden entries and shows them only with `hidden: true`.
+- **Cleaner output.** Tool lines name the command and its result (`✗ shell xcodegen generate — exit 70`, `⊘` for refusals), and a successful command shows its last meaningful line instead of `exit 0`. `--exec` without an API key fails fast with the fix, and a rejected key says so. Budget, kept-branch and headless-verified outcomes name the next command.
+- **TUI.** Slash commands and their arguments autocomplete with Tab (`/mode`, `/model`, `/attach` session ids, `/voice`, custom commands and skills). `/changes` (Ctrl+G) opens a change explorer: every file the session edited with A/M/D, +/− counts, its checkpoint, and the file's diff.
+
+### Fixed
+- `nool admin account activate`, `sync` and `trial` now work in any directory, not only inside a Nool repository, so a licence can reach a new machine before its first repo.
+- `nool upgrade` keeps the edition you're running: a Team or Enterprise binary no longer downgrades to Community.
+- Paying customers are no longer pointed at a trial. When your licence covers a higher edition than the installed binary, `activate`, `sync` and edition-only commands tell you to run `nool upgrade --edition <plan>`; a refused lease with a key present suggests `nool admin account sync`.
+- A licence is no longer erased when a refresh is refused for a billing hiccup, such as a card being retried. Only an explicit revocation removes it; otherwise it simply runs to its normal expiry.
+- Subscription changes that failed to apply are now retried instead of being skipped as duplicates.
+- The installers now replace any older `nool` found elsewhere on your PATH (for example `/usr/local/bin` or `~/.cargo/bin`), so a stale copy can't shadow the new one. `scripts/install.sh --no-update-others` opts out.
+
 ## [7.9.2] - 2026-09-22
 
 ### Fixed

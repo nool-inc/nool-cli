@@ -584,8 +584,9 @@ Run a goal as a coding session on this repository (7.9.0, Community). The model 
 
 ### `nool code` sandbox and session UX
 The `shell` jail writes the worktree, the private `$TMPDIR`, per-user toolchain temp/cache dirs (Xcode DerivedData, Swift/clang module caches, `~/.dart-tool`) and a shared build cache, `~/.nool/code-cache`, that Go, npm, pip, Gradle, Maven and `XDG_CACHE_HOME` point into (7.10.0). Unix sockets work under the worktree and `$TMPDIR`, never host sockets. The completion check's test runs use the same jail.
-- `[sandbox]` in `~/.nool/code.toml` (user-level only; a repository cannot widen its own jail): `write_paths = [...]` adds writable roots, `network = "localhost"` allows loopback (the outside network stays off; on Linux the jail's own loopback only), `mode = "off"` runs commands unjailed.
+- `[sandbox]` in `~/.nool/code.toml` (user-level only; a repository cannot widen its own jail): `write_paths = [...]` adds writable roots, `network = "off"` turns loopback off too, `mode = "off"` runs commands unjailed. Loopback is on by default (local test servers, mix, gradle's daemon, sccache, `pytest-rerunfailures`); the outside network stays off, Nool's console ports (4001, 4002) stay unreachable, and on Linux the jail sees only its own loopback. `network = "localhost"` is still accepted as the default spelled out.
 - A refused command ends with a `[sandbox]` note naming the writable roots and the setting that widens them; denials start with `denied:` and say what to do instead.
+- `Stop` hooks never reopen a verified goal: once the completion check passes, a `Stop` hook still runs, but a block is reported as a notice and the engine lands the goal.
 - A plain `nool ...` line in `shell` runs as the session's agent outside the jail: reads always, other commands (`task create`, `learn`, `bug report`) by mode; commands that land or undo work (`solidify`, `try promote`, `checkpoint`, `push`) always ask.
 - `list` counts hidden entries and shows dot entries only with `hidden: true`; `grep` skips hidden tool and editor directories.
 - TUI: Tab autocompletes slash commands and their arguments (`/mode`, `/model`, `/attach` session ids, `/voice`, custom commands and skills). `/changes` (Ctrl+G) opens a change explorer: files the session edited with A/M/D, +/- counts, their checkpoint, and each file's diff.
@@ -593,7 +594,7 @@ The `shell` jail writes the worktree, the private `$TMPDIR`, per-user toolchain 
 ```toml
 [sandbox]
 write_paths = ["~/work/shared-fixtures"]
-network = "localhost"
+network = "off"   # strict: no loopback either
 # mode = "off"
 ```
 

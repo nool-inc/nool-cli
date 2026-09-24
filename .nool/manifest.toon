@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Docs: nool code 7.10.0 sandbox loopback is on by default and Stop hooks no longer reopen a verified goal. CHANGELOG, CLAUDE.md, README, Skills.md and skills/nool-commands (byte-identical to the site copies) now present network="off" as the strict opt-out and network="localhost" as the default spelled out, not an opt-in; matches Nool docs/CHANGELOG.md 7.10.0.
-knot_id: cc59eb3ff0e3d56b0559a7bcf1012df91a47ce1a855436dd791987ac9efdcf63
-solidified_at: 1790240601636
+intent: Release 7.11.0 changelog: document the new nool code TUI (readable output, live status, command palette, fleet strip)
+knot_id: 116160fb652afe587b5c87c1be4916687fbf2cb502cbd504c7621c9d6cc55438
+solidified_at: 1790293917938
 thread: main

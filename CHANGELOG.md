@@ -4,6 +4,26 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.11.0] - 2026-09-24
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.11.0
+
+A new `nool code` TUI: readable output, live status, a command palette, and a
+view of the whole fleet. The governance screens (plan contracts, lease
+conflicts, goal review) stay as they were, and the start-up splash is
+unchanged and on by default.
+
+### Added
+- **Reading what happened.** Every overlay (`/diff`, `/help`, `/status`, `/mcp`, …) is now a scrollable, searchable pager (`/` to search, `n`/`N` to jump, `q`/Esc to close). Any tool's full output is one key away with Alt+↑/↓ and Enter. Assistant replies render as markdown, and diffs everywhere show old/new line numbers with word-level changes side by side from 120 columns.
+- **Knowing what it is doing.** The status line shows the current phase, elapsed time, and stalls. `/savings` and the goal review show what Nool saved (context tokens avoided, output kept out of context, prompt-cache reads, tests skipped), each labelled as measured or estimated.
+- **Getting around.** Ctrl+K opens a command palette over every command, skill and key. `/model` with no argument opens a picker with your recent models first. `/copy reply|code|diff|tool` copies over OSC 52 and the system clipboard.
+- **Fleets.** A fleet strip in the chat TUI (Alt+N) shows one row per child with its phase, current tool and cost, and flags when a child edits inside another child's declared scope.
+
+### Changed
+- **Starting anywhere.** `nool code` runs from any subfolder of a Nool repository and keeps that subfolder as the session's focus.
+- **Repository trust no longer blocks.** The `[y/N]` prompt before the TUI is replaced by a card inside it; the session starts with the repository's hooks off, and trust now records a fingerprint of the trusted commands and asks again when they change.
+- **Redraws are adaptive.** No fixed tick: the TUI draws when something changes, and animations pause while the terminal is unfocused or you are typing.
+
 ## [7.10.0] - 2026-09-24
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.10.0

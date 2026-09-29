@@ -647,6 +647,20 @@ nool push origin       # Replicate changes
 - **Last Updated**: September 29, 2026
 - **Commands Documented**: 46+ with 90+ subcommands
 
+### When a new Nool version ships
+This repository holds the public release page and the docs; the binaries are
+built elsewhere. Update it after the `vX.Y.Z` GitHub release exists:
+- `CHANGELOG.md`: a new top entry with the `Binaries:` link to the release.
+- Current-version stamps only (leave the "(7.10.0)"-style notes on individual commands):
+  `Skills.md` (`**Version**`, the last-updated line), `skills/nool-commands/SKILL.md`
+  (frontmatter `description`, `version`, `compatibility`, the "currently vX" line),
+  this file's "Current Version" lines, and `docs/index.html` (`softwareVersion`).
+- Command docs in `Skills.md` for anything the release added or changed.
+- Land it: `nool propose --all --intent "Document the X.Y.Z release …" --fast --solidify`,
+  then `nool checkpoint X.Y.Z && nool solidify`, then `nool push noolinc`.
+- The website serves copies of `skills/nool-commands/SKILL.md` and `Skills.md`
+  (as `nool-commands/SKILL.md` and `Commands.md`); they are re-copied when the site is bumped.
+
 ### Key Directories
 - `./Skills.md` — Complete command documentation (1,276 lines)
 - `./README.md` — User guide and installation

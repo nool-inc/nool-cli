@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Release: 7.13.1
-knot_id: 07fb86a9734ed11eb1fc68ec7b683046884cea9d56abbba573d614d267a50bf5
-solidified_at: 1790688127999
-thread: 
+intent: CLAUDE.md: a checklist for updating this repository when a Nool version ships (changelog entry, current-version stamps only, command docs, checkpoint and push, the site's copies of the skill files).
+knot_id: 6f9c8cb09b2a4073fc267c73dbb02000f387cb31ff1da907751b5bcf83aa5db0
+solidified_at: 1790694710938
+thread: main

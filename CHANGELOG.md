@@ -4,6 +4,19 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.13.2] - 2026-09-29
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.13.2
+
+Fixes from running fleets on AWS Bedrock and headless on Linux.
+
+### Fixed
+- **Fleets follow `--backend`.** The fleet planner and the reviewers ran on OpenRouter whatever `--backend` said, so `--backend bedrock` had no effect on planning. They now resolve `--model`/`--backend` the way a session does (a `provider:model` reviewer picks its own provider) and fail with the provider's setup message instead of quietly running on another backend.
+- **`--fleet-task` takes a description:** `id=path[,path…][@dep,…]: what this child should do`. Without one, a child still gets the fleet goal restricted to its paths; before, every child got only that.
+- **Headless agents can stop when blocked.** `goal_blocked` was accepted only after three consecutive idle rounds, and an agent working through a failing completion check never goes idle, so it looped until its limits. It is now also accepted after the same blocker is reported three times with work between the reports.
+- **Linux without bubblewrap.** Every shell command failed with `spawn failed`. The session now checks the jail once: when `bwrap` is missing or cannot create namespaces, it says so at the start (with the install command, or `[sandbox] mode = "off"`) and refuses shell commands with that reason. Nothing runs unjailed unless you turn the jail off.
+- **Bedrock Qwen prices.** Qwen models on Bedrock were priced at the generic fallback rate, about 4× too high for Qwen3 Coder Next ($0.50 / $1.20 per million tokens). Bedrock's Qwen models now use their Bedrock prices, and a model with no known price says so at session start and shows how to set `[telemetry.pricing_overrides]`.
+
 ## [7.13.1] - 2026-09-29
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.13.1

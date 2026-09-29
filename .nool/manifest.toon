@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Document the 7.13.2 release in the distribution repo: CHANGELOG entry and current-version stamps
-knot_id: 0c001fe59a7d0da71e9cd15ba799896c9fd7324cd5a67806e7601466c8a09afd
-solidified_at: 1790714474958
-thread: main
+intent: Release: 7.13.2
+knot_id: c0bf3c2e70f6a9499d04dd9f32ac25599f15d1a9036f0cdc4f476897d98cf748
+solidified_at: 1790714475609
+thread: 

@@ -4,6 +4,24 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.13.1] - 2026-09-29
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.13.1
+
+`nool code` sessions that ride out provider hiccups, size their context to the
+model, stay off other agents' files, follow repository playbooks and say up
+front which approvals a change will need; plus more model providers and a
+doom-loop stop. (7.12.0 and 7.13.0 were never published.)
+
+### Added
+- **More providers.** Anthropic, OpenAI, Google Gemini, Azure OpenAI and xAI, alongside OpenRouter, Mistral, AWS Bedrock, Cloudflare Workers AI and Ollama (`nool code provider add <id>`). `anthropic/claude-sonnet-5` still names an OpenRouter model; `anthropic:claude-sonnet-5` reaches the direct API.
+- **Retries.** Rate limits, overloads, 5xx and timeouts are re-sent with backoff up to `[code] retry_attempts` (default 3); a context-length error compacts once and re-sends; anything else pauses with the reason.
+- **Context sized to the model.** The primed context gets 1% of the window (1500 to 6000 tokens), or `[code] prime_budget_tokens`.
+- **No writes over other agents' leases.** A write outside the declared scope to a file another agent holds is refused with the holder's name.
+- **Playbooks.** `[code.playbooks.<name>]` with `steps` and `checks`; `nool code --playbook <name>` or `/playbook <name>`. The checks must pass before the goal lands.
+- **Steering up front.** `[steer]` checkpoints appear in the session state, and the completion check names the approval landing will need.
+- **Doom-loop stop.** The same edit, write or shell call three steps running pauses the session.
+
 ## [7.11.0] - 2026-09-24
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.11.0

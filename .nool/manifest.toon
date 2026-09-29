@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Release 7.11.0 changelog: document the new nool code TUI (readable output, live status, command palette, fleet strip)
-knot_id: 116160fb652afe587b5c87c1be4916687fbf2cb502cbd504c7621c9d6cc55438
-solidified_at: 1790293917938
+intent: Document the 7.13.1 release in the distribution repo: CHANGELOG entry, current-version stamps (Skills.md, skills/nool-commands/SKILL.md, CLAUDE.md, docs/index.html softwareVersion), the new direct providers, and a nool code section for retries, context budget, lease checks outside the scope, playbooks, steering and the doom-loop stop. The v7.13.1 GitHub release is live.
+knot_id: 43f03d21f1c81a6bb42531f3a28d04c4096f1fbc77fb956cee97749b7e1b5e83
+solidified_at: 1790688127813
 thread: main

@@ -4,6 +4,15 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.13.3] - 2026-09-30
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.13.3
+
+A security fix for Aram policies on multi-file changes.
+
+### Fixed
+- **Aram DSL rules hold for multi-file changes** (bug `12d38e13`). A proposal that touches more than one file is a Synthesis, and the text predicates (`diff_matches`, `diff_contains`, `identifier_exists`, `text_contains`) read only a single-file diff, so a blocking `forbids` rule never fired once a second file joined the change: the shipped `no_secret_keys.yaml` denied an AWS key on its own but let the same key land next to any other file, and `nool code` sessions, which land multi-file checkpoints, were not covered at all. `forbids` now holds for every file of the change, each under the rule's own `when`, so neither an unrelated file nor a test file in the bundle hides a leak, and a test fixture is still exempt on its own path. `requires` and `check` still judge the change as a whole.
+
 ## [7.13.2] - 2026-09-29
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.13.2

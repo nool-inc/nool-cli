@@ -1,18 +1,18 @@
 ---
 name: nool-commands
-description: Comprehensive expert guidance for the Nool CLI (v7.13.3). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, and multi-agent coordination. Optimized for AI coding agents.
+description: Comprehensive expert guidance for the Nool CLI (v7.14.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, multi-agent coordination, autonomous agent harness (nool code), ACP v1 stdio protocol, offline voice TTS, and provider registry. Optimized for AI coding agents.
 license: Apache-2.0
 metadata:
-  version: "7.13.3"
+  version: "7.14.0"
   author: nool-core-team
-compatibility: Requires nool CLI v7.13.3+
+compatibility: Requires nool CLI v7.14.0+
 allowed-tools: bash(nool *)
 ---
 
 
 # Nool CLI
 
-Nool is a Semantic-Agentic Commutative VCS (currently **v7.13.3**). The source of truth is the **Knot DAG**, not text.
+Nool is a Semantic-Agentic Commutative VCS (currently **v7.14.0**). The source of truth is the **Knot DAG**, not text.
 
 **When this applies:** any project tracked by Nool — confirm with `nool status`. Note that the presence of a `.nool/` directory alone is *not* proof: `~/.nool` is the machine-level identity/config dir (`config.toml`, `identity.key`), and tooling can create a bare `.nool/` as a side effect of writing a log there. A real ledger contains artifacts like `knots/`, `nool.db`, `manifest.toon`/`manifest.json`, `git_mirror/`, or `memory/`. When scripting a check, look for one of those, not just the directory. In such a project, **use `nool` for VCS, task management, and debugging** instead of raw `git`. In a repo with no `.nool/`, use git normally (or `nool init` to start tracking). Nothing here is specific to one repository — it is the general workflow for working in any Nool-tracked codebase, in any language.
 
@@ -127,9 +127,14 @@ nool task show --id <id>              # quickest next step after any task change
 nool task telemetry --id <id>         # token usage + cost attributed to a task
 nool task assign --id <id> ...        # assign to a user or agent identity
 nool task relate --id <id> ...        # link to another existing task retroactively
+nool task edit --id <id> [--name ..] [--desc ..] [--priority N] -s   # rename/redescribe in place: same id, links, state
 nool task cancel --id <id>            # no longer intended (keeps auditable history)
 nool task remove --id <id>            # drop from active views (keeps auditable history)
 ```
+
+Without `--solidify` a task change is only **staged**: the command says "staged, not applied" and
+prints the exact `nool solidify --candidate <id>` that applies it. With `--solidify` it seals the
+change this command made, never another queued candidate.
 
 Acceptance criteria (advisory, never block execution):
 
@@ -440,8 +445,9 @@ nool query validate <path>            # validate files without proposing
 Use Nool as the project's knowledge store, not just VCS/tasks:
 
 ```bash
-nool learn ...                 # record a knowledge finding
+nool learn ...                 # record a knowledge finding (a signed Finding knot)
 nool findings <topic>          # retrieve findings for a file, thread, or topic
+nool knowledge publish [--kind K] [--dry-run]   # mint findings recorded before 7.14 as knots, once
 nool enrich "<query>"          # recall; on a miss, run bounded self-healing enrichment + record the gap
 nool bug report|investigate|link|list|show|wont-fix|duplicate   # track bugs, link the fixing Knot
 ```
@@ -578,7 +584,8 @@ network = "off"                            # strict: no loopback either
 - `nool prune` — clean temporary and cached files.
 - `nool reify` — inspect bundles and validate syntax.
 - `nool order render --agent <spec.yaml> --intent "..." [--path p] [--node id] [--forbid p] [--hash]` — render a compact, model-facing TOON work order from an agent spec (was `nool flow render`; read-only; `--hash` prints the canonical Blake3 work-order hash).
-- `nool hooks install|uninstall` — install/remove the active coding-agent guard: git history-verb blocking + session context that redirects raw git to Nool equivalents (currently supports Claude Code; `uninstall` removes exactly what `install` added).
+- `nool hooks install|uninstall` — install/remove the active coding-agent guard: git history-verb blocking + session context that redirects raw git to Nool equivalents (currently supports Claude Code; `uninstall` removes exactly what `install` added). `install` retires the legacy `nool_guard.py` / `claude_hook.sh` hooks it supersedes; `install --global` also installs this skill (`~/.claude/skills/nool-commands`, `~/.agents/skills`) and moves a stale older Nool skill aside as a backup. Session start warns when an installed skill is older than the binary.
+- `[knowledge] replicate = "all" | "verdicts" | "none"` (default `verdicts`) — findings are signed `Finding` knots and council verdicts are attestations; `verdicts` replicates the verdicts on `nool push`, `all` the findings too, `none` keeps both on this machine.
 - `nool pr summary --base <base-knot-id> [--thread <name>]` — render the knots not yet in `--base` as a markdown review-context summary (semantic signal, blast radius, findings, justifications per knot) for a CI job to post as a GitHub PR comment.
 - `nool commit-template` — validate and preview the effective enterprise commit-message template.
 - `nool telemetry` — whether Nool sends anonymous usage analytics (which commands run, coarse error categories, timing). Separate and unrelated to `nool usage analytics`, which is LLM token-cost analytics.

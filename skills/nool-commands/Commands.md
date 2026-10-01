@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.10.0
+**Version**: 7.14.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -504,7 +504,7 @@ Inspect, replay, and troubleshoot repository state.
 - `nool debug step | diff | edit | rerun`: inspect/constrain/replay steps.
 - `nool debug blame`: find root cause (causal chain from a failure).
 - `nool debug bisect`: binary-search which Knot introduced a regression.
-- `nool debug blast-radius <change>`: semantic blast radius and risk analysis.
+- `nool debug blast-radius <change>`: semantic blast radius and risk analysis. `--symbol <name>` (7.5.0) walks one symbol's own consumers instead of every importer of its file; `--symbol path#Name` anchors on one declaring file.
 
 ### `nool reify`
 Inspect bundles and validate syntax.
@@ -579,8 +579,27 @@ Uninstall the Nool CLI and remove local identity keys.
 ### `nool code [GOAL]`
 Run a goal as a coding session on this repository (7.9.0, Community). The model works in a `nool try` worktree under its own lease, and the session ends `Verified` only when Nool's completion check passes: a full-mode checkpoint, the affected tests run in a write/network jail, the task's acceptance criteria, and try-impact readiness. Sessions can never write `.nool/` or `.git`; raw git history verbs and state-changing `nool` verbs are refused.
 - `--exec`: headless one-shot, full-auto unless `--mode` says otherwise. Exit codes: 0 verified, 2 blocked, 3 lease conflict, 1 paused or failed.
-- `--mode suggest|auto-edit|full-auto`, `--budget <usd>`, `--max-rounds <n>`, `--profile full|bare`, `--task <id>` (its acceptance criteria join the check, and it is finished with the landed knot), `--json` (one event envelope per line), `--list` (this repo's sessions), `--serve` (the per-repo session API).
-- `--model <provider:model>` (e.g. `mistral:devstral-latest`) or a model on the backend (`anthropic/claude-sonnet-5`); `--backend openrouter|ollama|cloudflare|mistral|bedrock`. Defaults come from `nool code model set`, else `[code]` in config.
+- `--mode suggest|auto-edit|full-auto`, `--budget <usd>`, `--max-rounds <n>`, `--profile full|bare`, `--task <id>` (its acceptance criteria join the check, and it is finished with the landed knot), `--playbook <name>` (start from a `[code.playbooks.<name>]` plan template, 7.13.1), `--json` (one event envelope per line), `--list` (this repo's sessions), `--serve` (the per-repo session API).
+- `--model <provider:model>` (e.g. `mistral:devstral-latest`, `anthropic:claude-sonnet-5`) or a model on the backend (`anthropic/claude-sonnet-5` is an OpenRouter id); `--backend openrouter|ollama|cloudflare|mistral|bedrock|anthropic|openai|google|azure|xai`. Defaults come from `nool code model set`, else `[code]` in config.
+
+### `nool code` recovery, context, leases, playbooks and steering (7.13.1)
+- **Retries.** A model call that fails with a rate limit, an overload, a 5xx or a timeout before any tool call arrived is re-sent after 2 s, 4 s, 8 s (at most 30 s), up to `[code] retry_attempts` times (default 3; 0 turns it off). An interrupt cuts the wait short. A context-length error compacts the transcript once and re-sends. A rejected key, an unknown model or exhausted retries pause the session and say which.
+- **Context budget.** The context primed at session start gets 1% of the model's context window (1500 to 6000 tokens); `[code] prime_budget_tokens` sets it. After `declare_scope`, `<nool_state>` shows the scope's blast radius.
+- **Leases outside the scope.** Before `write`, `edit` or `apply_patch` touches a file outside the declared scope, the session checks that file's lease; a file another agent holds is refused, naming the holder, before anyone is asked to approve the write.
+- **Playbooks.** `[code.playbooks.<name>]` holds `steps` and `checks`. `--playbook <name>` or `/playbook <name>` starts the plan from the steps, and every check must pass in the completion check before the goal can land.
+- **Steering.** With `[steer]` enabled, `<nool_state>` lists each checkpoint with its role and trigger, and the completion check adds an advisory `steer` step naming the approval landing will need (e.g. ciso at pre-push for a sensitive path). Solidify still enforces the checkpoints.
+- **Doom-loop stop.** The same write, edit or shell call three steps running pauses the session with a reason; the same read three times is a warning.
+
+```toml
+[code]
+retry_attempts = 3
+# prime_budget_tokens = 4000
+
+[code.playbooks.bugfix]
+description = "Reproduce, fix, prove"
+steps = ["write a failing test", "fix the bug", "run the suite"]
+checks = ["cargo test"]
+```
 
 ### `nool code` sandbox and session UX
 The `shell` jail writes the worktree, the private `$TMPDIR`, per-user toolchain temp/cache dirs (Xcode DerivedData, Swift/clang module caches, `~/.dart-tool`) and a shared build cache, `~/.nool/code-cache`, that Go, npm, pip, Gradle, Maven and `XDG_CACHE_HOME` point into (7.10.0). Unix sockets work under the worktree and `$TMPDIR`, never host sockets. The completion check's test runs use the same jail.
@@ -602,7 +621,7 @@ network = "off"   # strict: no loopback either
 Run Nool as an Agent Client Protocol (ACP v1) agent over stdio: JSON-RPC 2.0, one message per line (7.10.0). Editors that speak ACP run it with no other setup, e.g. Zed: `"agent_servers": {"Nool": {"command": "nool", "args": ["code", "acp"]}}`. Session steps stream as ACP updates (message and thought chunks, tool calls, plan, mode, usage); permission requests go to the editor.
 
 ### `nool code provider`
-Model provider credentials (7.10.0). Providers: `openrouter`, `ollama`, `cloudflare` (Workers AI), `bedrock` (AWS), `mistral`.
+Model provider credentials (7.10.0). Providers: `openrouter`, `ollama`, `cloudflare` (Workers AI), `bedrock` (AWS), `mistral`, and from 7.13.1 the direct APIs `anthropic`, `openai`, `google` (Gemini), `azure` (Azure OpenAI: `AZURE_OPENAI_ENDPOINT` plus the key; the deployment name is the model) and `xai`.
 - `nool code provider list`: every provider, whether it is set up (and which variables), its default model, and where to get a key.
 - `nool code provider add <provider> [--account <id>] [--gateway <name>] [--region <region>] [--use-default-model]`: paste the key(s) when asked (hidden). Stored in `~/.nool/credentials.toml` (mode 0600); an environment variable always wins. `--account`/`--gateway` are for Cloudflare, `--region` for Bedrock.
 - `nool code provider test <provider>`: one free request with the stored credentials; reports ok or the error, never the key.
@@ -636,4 +655,4 @@ Notifications when a session's work is done (7.10.0), configured in `~/.nool/cod
 
 ---
 
-*Last updated: September 24, 2026 for Nool v7.10.0*
+*Last updated: October 1, 2026 for Nool v7.14.0*

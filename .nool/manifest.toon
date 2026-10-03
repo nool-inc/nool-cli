@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Release: 7.14.0
-knot_id: b0651cb6c197aafb76613006c7a040ef51f46f1b89a9919a7cd5866f475acfcb
-solidified_at: 1790859891663
-thread: 
+intent: Document the 7.15.0 release in the distribution repo: CHANGELOG entry and current-version stamps
+knot_id: 496c3c84299a4d953548c703ab385dd90b7c37fc047af27a649c52ff65fef99a
+solidified_at: 1791008471078
+thread: main

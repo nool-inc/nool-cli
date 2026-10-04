@@ -1,18 +1,18 @@
 ---
 name: nool-commands
-description: Comprehensive expert guidance for the Nool CLI (v7.15.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, multi-agent coordination, autonomous agent harness (nool code), ACP v1 stdio protocol, offline voice TTS, and provider registry. Optimized for AI coding agents.
+description: Comprehensive expert guidance for the Nool CLI (v7.16.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, multi-agent coordination, autonomous agent harness (nool code), ACP v1 stdio protocol, offline voice TTS, and provider registry. Optimized for AI coding agents.
 license: Apache-2.0
 metadata:
-  version: "7.15.0"
+  version: "7.16.0"
   author: nool-core-team
-compatibility: Requires nool CLI v7.15.0+
+compatibility: Requires nool CLI v7.16.0+
 allowed-tools: bash(nool *)
 ---
 
 
 # Nool CLI
 
-Nool is a Semantic-Agentic Commutative VCS (currently **v7.15.0**). The source of truth is the **Knot DAG**, not text.
+Nool is a Semantic-Agentic Commutative VCS (currently **v7.16.0**). The source of truth is the **Knot DAG**, not text.
 
 **When this applies:** any project tracked by Nool — confirm with `nool status`. Note that the presence of a `.nool/` directory alone is *not* proof: `~/.nool` is the machine-level identity/config dir (`config.toml`, `identity.key`), and tooling can create a bare `.nool/` as a side effect of writing a log there. A real ledger contains artifacts like `knots/`, `nool.db`, `manifest.toon`/`manifest.json`, `git_mirror/`, or `memory/`. When scripting a check, look for one of those, not just the directory. In such a project, **use `nool` for VCS, task management, and debugging** instead of raw `git`. In a repo with no `.nool/`, use git normally (or `nool init` to start tracking). Nothing here is specific to one repository — it is the general workflow for working in any Nool-tracked codebase, in any language.
 
@@ -585,6 +585,12 @@ network = "off"                            # strict: no loopback either
 - `nool reify` — inspect bundles and validate syntax.
 - `nool order render --agent <spec.yaml> --intent "..." [--path p] [--node id] [--forbid p] [--hash]` — render a compact, model-facing TOON work order from an agent spec (was `nool flow render`; read-only; `--hash` prints the canonical Blake3 work-order hash).
 - `nool hooks install|uninstall` — install/remove the active coding-agent guard: git history-verb blocking + session context that redirects raw git to Nool equivalents (currently supports Claude Code; `uninstall` removes exactly what `install` added). `install` retires the legacy `nool_guard.py` / `claude_hook.sh` hooks it supersedes; `install --global` also installs this skill (`~/.claude/skills/nool-commands`, `~/.agents/skills`) and moves a stale older Nool skill aside as a backup. Session start warns when an installed skill is older than the binary.
+- **Branches follow the repository's conventions.** When the user asks for a feature, bug fix, hotfix or release branch, run `nool branch conventions` (or read it from the session-start context), pick the kind by purpose — feature: new behaviour; bug: a fix for the next release; hotfix: an urgent fix to what is already released; release: stabilising a version — and create it with `nool branch new <kind> "<what it is for>" [--ticket <id>] [--version X.Y.Z]`, which names it by the configured pattern and starts it from the kind's base (for example `develop` for features, `main` for hotfixes). Never invent a name or pick the base yourself; when the pattern needs a ticket or version you do not have, ask. `nool branch check [<name>]` says whether a name conforms. With `[branches]` in nool.toml, `git switch -c`/`checkout -b`/`branch <name>` with any other name is refused.
+- **Fleets can run children on cloud sandboxes:** `nool code --fleet "<goal>" --pool local:4 --pool daytona:8` (or `local-process:N` to exercise the remote path on this machine). Children land the same way wherever they ran; `--pool modal:N` uses Modal (the `modal` Python package, `modal setup` done). Cloud pools need `NOOL_SANDBOX_BUILD` (a Linux release archive); Daytona also needs `DAYTONA_API_KEY`. Children reach the model through the fleet's gateway over a `cloudflared` quick tunnel (or `NOOL_GATEWAY_URL`); a sandbox that can't reach it fails at start with the reason.
+- **Route and operate running fleets:** `--route <task-or-glob>=<pool>` pins tasks to a pool (`--pool daytona:4,name=big,model=tunnel|hub|url:<url>` names pools and picks how their children reach the model; `hub` relays through `[coordination] hub_url` with the hub token); other tasks take the first pool with a free slot. While a fleet runs, `nool fleet ps` / `nool fleet status` show its pools, routes, each task's pool, sandbox and spend, and `nool fleet ctl task cancel|retry|route …`, `route …`, `pool add|drain|resize …` change it — the same commands as `/fleet …` inside `nool code`. Prefer these over killing processes or editing files under `.nool/code/`.
+- **Fleets land on a named branch:** `nool code --fleet "<goal>" --into feature/x [--base develop]` (also `nool fleet plan --run … --into`, `nool fleet start … --into`) switches the repo to that branch first (creating it from the base) and every task lands there.
+- **Leases are per branch:** overlap with a lease on another branch is a warning (`also being changed on <branch>`), not a conflict — expect to reconcile those files when the branches merge. Same-branch overlap still conflicts.
+- `nool hooks mcp --agent <claude|cursor|gemini|windsurf|opencode> [--global] [--remove]` — register Nool's MCP server with another coding agent (project config, or the user config with `--global`, which also installs this skill for that agent).
 - `[knowledge] replicate = "all" | "verdicts" | "none"` (default `verdicts`) — findings are signed `Finding` knots and council verdicts are attestations; `verdicts` replicates the verdicts on `nool push`, `all` the findings too, `none` keeps both on this machine.
 - `nool pr summary --base <base-knot-id> [--thread <name>]` — render the knots not yet in `--base` as a markdown review-context summary (semantic signal, blast radius, findings, justifications per knot) for a CI job to post as a GitHub PR comment.
 - `nool commit-template` — validate and preview the effective enterprise commit-message template.

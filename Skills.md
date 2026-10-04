@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.15.0
+**Version**: 7.16.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -418,6 +418,9 @@ Plan and run fleets of sovereign agents over a goal.
 - `nool fleet plan --task id=paths [--width <n>|auto] [--run <builder.yaml>] [--isolation shared|worktree]`: preview the NodeID-disjoint parallel wave partition (no spend). `--width` caps concurrency per wave: an integer, or `auto` to take the minimum of usable cores (minus `[fleet] reserved_cpus`), available memory over `memory_per_agent_mb`, and the remaining `budget_usd_per_day` over the builder's `per_run_usd`; the printed `Ceiling:` line and the `--json` `width_decision` name which one bound it. Defaults to `[fleet] width`, else `auto` (bounded by `[fleet] max_width`, 16). `--run` executes it, giving each task its own try branch, agent id, and lease. `--isolation worktree` gives each task its own `.nool/try/<run>-<task>/` checkout instead of the shared tree; `--overlap parallel` (worktree only) runs overlapping tasks at once and orders their promotes with `--after`.
 - `nool fleet capacity [--width <n>|auto] [--builder <spec>] [--json]`: report the wave-concurrency ceiling for this machine and budget without planning anything — each probe's width (CPU, memory, budget), which one binds, and the `[fleet]` settings that produced it. `--builder` supplies the `budget.per_run_usd` that lets the daily allowance bind.
 - `nool fleet advise`: recommend Single / ParallelIndependent / CentralizedQuorum architecture from measurable task signals, before spending.
+- `nool fleet ps`: the `nool code` fleets running in this repository, with their task counts.
+- `nool fleet status [<fleet>] [--json]`: a fleet's pools (capacity, load, draining, how children reach the model), routes and tasks (phase, pool, sandbox, spend and gateway spend, why it stopped). A running fleet is read live; an ended one from `.nool/code/<fleet>/fleet.ndjson`.
+- `nool fleet ctl [--fleet <id>] <command>`: operate a running `nool code` fleet through its loopback control API (token in the run directory's owner-only `control.json`). Commands: `task cancel <task>` (a running child is interrupted; dependents are skipped), `task retry <task>` (interrupt a running child and run it again without using an iteration), `task route <task> <pool>`, `route <task-or-glob>=<pool>`, `pool add <kind[:N][,name=…][,model=tunnel|hub|url:<url>]>`, `pool drain <pool>` (no new children; running ones finish), `pool resize <pool> <N>`. Inside `nool code`, `/fleet status|task …|route …|pool …` sends the same commands.
 - `nool fleet start --builder <b.yaml> --reviewer <r.yaml> --intent "..." [--isolation shared|worktree] [--nodes <scope>]`: builder produces work, cross-vendor reviewer quorum judges it with dynamic quorum. `--isolation worktree` roots the builder's `fs`/`shell` sandboxes and `[harness.sandbox]` write whitelist at its own checkout; `--nodes` files its lease scope (exit 3 on a foreign hold). Quorum approval promotes the branch; a block leaves it as the review surface.
 
 ### `nool persona`
@@ -483,6 +486,11 @@ Manage system configuration.
 Install or uninstall the active coding-agent guard: git history-verb blocking plus session context that redirects raw git to Nool equivalents.
 - `nool hooks install`: install the guard for a supported coding agent (currently `claude`, i.e. Claude Code).
 - `nool hooks uninstall`: remove exactly what `install` added, leaving any other hooks or settings untouched.
+- `nool pr merge <branch> [--into <target>] [--remote origin] [--push]` (Team): merge a pull request's branch through Nool's `knot.bin` merge driver (which GitHub's merge button cannot run), recording both sides' knots; `.github/workflows/nool-merge-queue.yml` runs it for approved PRs labelled `nool-merge`.
+- `nool branch new <feature|bug|hotfix|release> "<description>" [--ticket ID] [--version X.Y.Z] [--from BASE] [--no-switch]`: create a git branch named by the `[branches]` convention for its kind, from the kind's base, and switch to it.
+- `nool branch check [<name>]`: check a branch name (default: the current branch) against the conventions; exit 2 when an enforced one is broken.
+- `nool branch conventions [--json]`: the patterns, bases and purpose of each kind, and the long-lived branches.
+- `nool hooks mcp --agent <claude|cursor|gemini|windsurf|opencode> [--global] [--remove]`: register Nool's MCP server (`nool-mcp --stdio`) in that agent's MCP config, the project's or with `--global` the user's (which also installs this skill where the agent reads skills). A config it cannot parse is refused, never overwritten.
 
 ### `nool commit-template`
 Validate and preview the effective enterprise commit-message template.
@@ -655,4 +663,4 @@ Notifications when a session's work is done (7.10.0), configured in `~/.nool/cod
 
 ---
 
-*Last updated: October 2, 2026 for Nool v7.15.0*
+*Last updated: October 4, 2026 for Nool v7.16.0*

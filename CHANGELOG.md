@@ -4,6 +4,36 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.16.0] - 2026-10-04
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.16.0
+
+Fleets that run on cloud sandboxes as well as your machine, steerable while they run; Git Flow branches with naming conventions, branch-aware leases and a merge queue for GitHub; and a goal review for headless `nool code` that judges a fixed checklist.
+
+### Added
+- **Fleet children on cloud sandboxes, this machine, or both.** `nool code --fleet --pool local:4 --pool daytona:8 --pool modal:4` spreads a fleet across pools in placement order; the fleet is as wide as its pools together (without `--pool`, this machine only, as before). Each sandboxed child gets its own machine with the target branch cloned into it, and its work comes back as a git bundle that merges through `nool pull`'s path, knots included. The sandbox is deleted when the child lands, is discarded or fails. Providers: `daytona` (`DAYTONA_API_KEY`), `modal` (the `modal` Python package, `modal setup` done) and `local-process` (for testing the remote path on one machine); cloud pools need `NOOL_SANDBOX_BUILD`, a Linux release archive.
+- **Sandboxed children never hold your model provider key.** The fleet runs a model gateway on your machine: each child gets its own token and a budget cap (HTTP 402 past it), and the token is revoked when the child settles. Children reach the gateway through an outbound-only Cloudflare quick tunnel (`cloudflared`), the hub's relay (`model=hub`), or a URL of your own (`model=url:<url>`, or `NOOL_GATEWAY_URL`). A sandbox that cannot reach the gateway fails at start and says why.
+- **See and steer a running fleet.** `nool fleet ps` lists running fleets, and `nool fleet status [<fleet>]` shows a fleet's pools, routes and tasks, with each task's pool, sandbox and spend; it reads an ended fleet from its log. `nool fleet ctl` changes a running fleet: `task cancel|retry|route`, `route <task-or-glob>=<pool>`, `pool add|drain|resize`. Inside `nool code`, `/fleet status|task …|route …|pool …` does the same, and the fleet strip shows each pool's load and which pool each child runs in.
+- **Route tasks to pools.** `--route <task-or-glob>=<pool>` pins tasks to a pool, `--pool kind[:N],name=<name>,model=tunnel|hub|url:<url>` names pools and picks how their children reach the model, and everything else takes the first pool with a free slot. A pool added mid-run widens the fleet at once; a drained pool finishes its children and takes no more.
+- **Branch naming conventions.** A `[branches]` section in `nool.toml` sets the pattern and base branch for feature, bug, hotfix and release branches (placeholders `{slug}`, `{ticket}`, `{version}`, `{date}`, `{user}`). `nool branch new <kind> "<description>"` creates a branch by the convention from its base, `nool branch check` validates a name and `nool branch conventions` prints them. Agents get the conventions in their session context.
+- **A fleet lands on the branch you name.** `nool code --fleet --into <branch> [--base <branch>]` (and `nool fleet plan --run … --into`, `nool fleet start … --into`) switches to the target branch first, creating it from `--base`, the convention's base or the default branch, and every task lands there.
+- **`nool pr merge` and a merge queue for GitHub (Team).** GitHub's merge button cannot merge Nool's `.nool/knot.bin` when both branches moved. `nool pr merge <branch> --into <target> [--push]` merges through `nool pull`'s path, and `.github/workflows/nool-merge-queue.yml` runs it when an approved PR is labelled `nool-merge` (same-repository branches only; it never runs the PR's code).
+- **`nool hooks mcp --agent <claude|cursor|gemini|windsurf|opencode>`** registers Nool's MCP server with another coding agent, in its project config or, with `--global`, its user config (which also installs the `nool-commands` skill). `--remove` takes out only Nool's entry.
+- **`[code] review_model`** runs the headless goal review on a different model than the agent's, so the agent does not grade its own work.
+
+### Changed
+- **Leases know their branch.** Overlap with a lease held on another branch no longer blocks: the announce is granted with a warning that the files will meet in a merge. Overlap on the same branch, or with a lease of unknown branch, conflicts as before. Older peers still verify and honour every claim, and the hub applies the same rule.
+- **Headless `nool code` fixes the goal's requirements once.** At the start of an `--exec` session or a fleet child, the goal's requirements are listed once (R1, R2, …); the agent sees the list before it plans, and every goal review judges exactly that list, so the target no longer moves between rounds.
+- **The goal review sees what checks printed and every changed file.** A passing check carries the end of its output into the evidence, and a diff past the reviewer's limit comes with the full list of changed files and their line counts.
+- **Fewer wasted review rounds.** A completion check on unchanged work returns the previous result without rerunning, and after 5 review denials the session pauses with the reviewer's objections instead of spending more of the budget.
+- **Mechanical mistakes are repaired, not denied.** An absolute path inside the worktree is read as the relative path it names, a `read` on a directory lists it, and in a headless full-auto session a first `write` or `edit` opens the scope on that file (another agent's lease still refuses it).
+- **The fleet starts the task that does not interfere.** Among the tasks that may start, one whose blast radius reaches a running task's files yields to one that does not.
+
+### Fixed
+- **Parallel fleet children no longer block on each other's tests** (bug 9d470e7c). Each child's completion check leaves out the Python tests other fleet tasks own; the fleet's integrated check still runs everything on the combined result.
+- **A fresh clone initialises when its knots have parents on another branch.** `nool init` aborted with a SQLite FOREIGN KEY error; init and `nool pull` now read every branch the checkout carries, and a knot whose parent is still missing waits instead of failing the ingest.
+- **`nool hooks install` no longer wipes a settings file it cannot parse.** A `settings.json` with a comment or a trailing comma is refused and left unchanged; saves keep the previous file as `settings.json.nool-bak`.
+
 ## [7.15.0] - 2026-10-03
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.15.0

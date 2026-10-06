@@ -4,6 +4,49 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.17.0] - 2026-10-07
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.17.0
+
+Review-driven work on `nool code` (docs/reports/2026-10-05-nool-code-best-harness-review.md): an honest completion check, safer defaults, stable request prefixes, durable sessions and a loop that learns from its own failures.
+
+### Added
+- **Releasable gate.** A goal verifies only when `nool doctor --strict` reports RELEASABLE on its worktree (single agents, fleet children and the fleet's integrated check). `[code] require_releasable` (default true) turns it off with a visible note; a doctor that cannot run fails the step. A failed releasable result is never answered from the unchanged-diff cache.
+- **Graded verdict.** A passing check is `verified` (a pre-existing test, a playbook check or an evidenced task criterion passed), `self_checked` (only checks the session wrote) or `unverified`. The level is in the check evidence and the attestation. `[code] min_verdict = "verified"` refuses weaker results. Three reviews with no verdict pause the session.
+- **Chat mode.** In an interactive session a plain question gets an answer with no goal rounds; the first write opens the scope in every mode (approvals unchanged).
+- **Guidance engine.** Hints and block-once refusals that name the right Nool command after repeated lookups, repeated failures or repeated errors. `[code] guidance = off | nudge | block` (default block); every hint and block is a `Guidance` event.
+- **Before/after diagrams on approvals.** The plan and promote approvals show the changed files, the flow of actions and data around the changed entities, and what the change brings, in ASCII and Mermaid. Confirmation follows the mode; full-auto and headless record it in `check.json`.
+- **Durable sessions.** A transcript is written per session. `nool code --resume <id>`, `--continue`, `--fork <id> [--at n]` and `/rewind [n]` (conversation plus files changed by edits or shell, from per-turn snapshots); `--list` shows ended sessions.
+- **Permission rules.** Allow, ask and deny rules in `~/.nool/code.toml [permissions]` and `nool.toml [code.permissions]`, an Alt+p "always" answer, and `nool code permissions list|add|remove`. Hard limits first, then deny over ask over allow; a repository cannot allow what the user denies, and its allow rules need trust.
+- **Script tools.** `~/.nool/tools/<name>/tool.toml` (and trusted repos' `.nool/tools`) add jailed tools as `script__<name>`; `nool code doctor` lists them.
+- **Hook parity.** `SessionEnd` and `PreCompact` fire; a PreToolUse hook may return `updatedInput` (the rewritten call is gated again).
+- **Governance loop.** `nool code policy scan|suggestions|show|accept|reject|snooze` turns recurring completion-check failures into suggested Aram policies or playbook checks; nothing is enabled until you accept it.
+- **Native Anthropic wire.** The `anthropic` provider streams the Messages API with explicit cache breakpoints, signed thinking blocks replayed across tool turns (`reasoning_effort` low, medium or high) and image parts in the message type. Verified against stub servers only.
+- **False-done eval.** `benchmarks/nool-code/false_done/false_done.py` recounts sessions that ended verified against the Terminal-Bench grader.
+- **Model catalog.** OpenRouter limits are fetched best-effort (3 s, cached a day; `NOOL_NO_MODEL_CATALOG` disables) and `/cost` marks unpriced models as estimated and shows the cache hit ratio.
+- **Claude 5 prices** from Anthropic's pricing page.
+- **`web_fetch`.** Fetch a documentation page as text. It refuses loopback, private and metadata addresses (checked on the address actually connected to, and again on every redirect), prefixes the result with an untrusted-content banner, and asks in suggest and auto-edit modes.
+- **Background shell.** `shell` takes `background: true` and `timeout_secs`; `shell_output` and `shell_kill` read and stop the job. At most four jobs, under the same jail, killed at session end or interrupt.
+- **Tolerant `edit`.** A unique match ignoring line endings, trailing whitespace or indentation is applied; an ambiguous one is refused with the line numbers; a miss returns the nearest region. `apply_patch` keeps CRLF files intact, `read` caps an over-long line, and a non-UTF-8 file gets a clear message.
+- **`explore`.** A bounded read-only helper (8 steps, $0.10) answers a broad question and returns only a summary; its cost shows as `explore` in `/cost`.
+- **Browser tools** (opt-in, `[code] browser = true`). A thin in-process Chrome DevTools client: open, accessibility snapshot with element refs, click, type, console, network, screenshot and eval. Navigation is limited to loopback and local files unless approved; `browser_path` and `browser_no_sandbox` are read only from `~/.nool/code.toml`.
+- **Image and PDF understanding through a tool cache.** Nothing is embedded: `image_read`, `pdf_read` and `image_view` run external tools (ocrs installed with `cargo install --locked`, or tesseract, poppler and mupdf found on PATH) from `~/.nool/toolcache/`, installed only when needed, never downloaded twice, and removable (`nool code tools list|install|remove|prune`, `toolbox`). Only curated registry entries can be installed by the agent. `image_view` attaches the image itself on the native Anthropic wire.
+- **Deferred tool schemas, `cache_ttl`, `/effort`.** Above `[code] mcp_defer_tokens` (default 10,000) MCP and script tools are reached through `tool_search` and `tool_call`; `[code] cache_ttl = "1h"` for Anthropic; `/effort` changes the reasoning effort from the next request.
+- **`[code] utility_model`** for the hidden one-shot calls (requirements extraction, and the compaction summary when set).
+- **Headless ergonomics.** `nool code --exec` takes the goal from stdin, `--output-format text|json|stream-json` (stream-json starts with a `stream_header` line carrying `schema_version`), and `docs/nool-code-protocol.md` documents the session API.
+
+
+### Changed
+- **A `Stop` hook you configured can block before landing** (at most twice); Nool's own bridge hook never runs in `nool code`.
+- **Output cap** is the model's maximum up to 64,000 tokens, unless you set `max_tokens` for the model (then it is honoured as set). A reply cut at the output limit gets a notice.
+- **The wrap-up keeps the full tool list** and refuses other tools; compaction reuses the session's prefix, so both stay cacheable.
+- **Cancel (Esc) reaches** the completion check, tests, doctor, propose, promote, rebase and lease waits; the doom-loop stop ignores read-only polling and changing output.
+- **Tab-queued messages are delivered; `ask_user` degrades to decide-and-continue; approval letters need Alt.**
+- **Model client** has explicit timeouts, honours Retry-After, and a cut tool call shows the model an error instead of running with no arguments.
+- **Shell jail** denies reads of credential locations; session approvals of destructive commands are exact; the allow-list network mode fails closed.
+- **The system prompt is about 26 percent shorter** (same rules, less repetition); Ctrl+C interrupts a running agent, and the first-run menu lists every provider.
+- **Hook transcript logs** rotate at 16 MB; telemetry older than 90 days is pruned daily (`nool prune --telemetry`).
+
 ## [7.16.0] - 2026-10-04
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.16.0

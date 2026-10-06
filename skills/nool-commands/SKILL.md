@@ -1,18 +1,18 @@
 ---
 name: nool-commands
-description: Comprehensive expert guidance for the Nool CLI (v7.16.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, multi-agent coordination, autonomous agent harness (nool code), ACP v1 stdio protocol, offline voice TTS, and provider registry. Optimized for AI coding agents.
+description: Comprehensive expert guidance for the Nool CLI (v7.17.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, multi-agent coordination, autonomous agent harness (nool code), ACP v1 stdio protocol, offline voice TTS, and provider registry. Optimized for AI coding agents.
 license: Apache-2.0
 metadata:
-  version: "7.16.0"
+  version: "7.17.0"
   author: nool-core-team
-compatibility: Requires nool CLI v7.16.0+
+compatibility: Requires nool CLI v7.17.0+
 allowed-tools: bash(nool *)
 ---
 
 
 # Nool CLI
 
-Nool is a Semantic-Agentic Commutative VCS (currently **v7.16.0**). The source of truth is the **Knot DAG**, not text.
+Nool is a Semantic-Agentic Commutative VCS (currently **v7.17.0**). The source of truth is the **Knot DAG**, not text.
 
 **When this applies:** any project tracked by Nool — confirm with `nool status`. Note that the presence of a `.nool/` directory alone is *not* proof: `~/.nool` is the machine-level identity/config dir (`config.toml`, `identity.key`), and tooling can create a bare `.nool/` as a side effect of writing a log there. A real ledger contains artifacts like `knots/`, `nool.db`, `manifest.toon`/`manifest.json`, `git_mirror/`, or `memory/`. When scripting a check, look for one of those, not just the directory. In such a project, **use `nool` for VCS, task management, and debugging** instead of raw `git`. In a repo with no `.nool/`, use git normally (or `nool init` to start tracking). Nothing here is specific to one repository — it is the general workflow for working in any Nool-tracked codebase, in any language.
 
@@ -557,7 +557,7 @@ nool code mcp list|add|remove|login|logout     # nool code plugin list|add <sour
 
 Inside a session: Tab autocompletes slash commands and their arguments (`/mode`, `/model`, `/attach`, `/voice`, custom commands, skills); `/changes` (Ctrl+G) opens the change explorer (files edited with A/M/D, +/- counts, checkpoint, per-file diff). A plain `nool ...` shell line runs as the session's agent outside the jail: reads always, other commands by mode, and commands that land or undo work (`solidify`, `try promote`, `checkpoint`, `push`) always ask. `list` hides dot entries unless called with `hidden: true`.
 
-The `shell` jail already writes toolchain temp/cache dirs and a shared build cache (`~/.nool/code-cache`). Widen it only in `~/.nool/code.toml` (user-level; a repository cannot widen its own jail). A refusal ends with a `[sandbox]` note naming the setting. Loopback is on by default (local test servers, build daemons); the outside network stays off. A `Stop` hook never reopens a verified goal: after the completion check passes, its block is only a notice and the goal lands.
+The `shell` jail already writes toolchain temp/cache dirs and a shared build cache (`~/.nool/code-cache`). Widen it only in `~/.nool/code.toml` (user-level; a repository cannot widen its own jail). A refusal ends with a `[sandbox]` note naming the setting. Loopback is on by default (local test servers, build daemons); the outside network stays off. A `Stop` hook you configured may block once or twice before landing (exit 2 or `{"decision":"block","reason":…}`): the reason goes back to the agent, the check must pass again, and after 2 continuations the block is only a notice and the goal lands. Nool's own bridge hook never runs inside `nool code`.
 
 ```toml
 [sandbox]

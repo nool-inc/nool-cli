@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.16.0
+**Version**: 7.17.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -663,4 +663,4 @@ Notifications when a session's work is done (7.10.0), configured in `~/.nool/cod
 
 ---
 
-*Last updated: October 4, 2026 for Nool v7.16.0*
+*Last updated: October 6, 2026 for Nool v7.17.0*

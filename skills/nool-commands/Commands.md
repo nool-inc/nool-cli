@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.17.0
+**Version**: 7.18.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -12,7 +12,7 @@ Many commands also accept `--json` for machine-readable output (e.g. `status`, `
 
 **Exit codes** (every command): `0` ok · `1` error (escalate) · `2` blocked (change the content, retry) · `3` conflict (back off, retry unchanged) · `4` unavailable (the command is in a higher edition, or this edition's lease is missing — activate or upgrade). `nool doctor` keeps its own documented codes.
 
-**Editions**: the same source builds a Community, a Team and an Enterprise `nool`. Commands marked *[Team]* or *[Enterprise]* below exist only in that edition and above; a lower edition prints the upgrade hint and exits 4, and the Team/Enterprise binaries verify a lease before running them (`nool admin account trial`, `nool admin account activate <key>`, `nool upgrade --edition team|enterprise`). Team: `agent`, `announce`, `council`, `eval`, `explore`/`inquiry`, `fleet`, `order`/`flow`, `harness`, `msg`, `persona`/`soul`, `playbook`, `pr`, `review`, `steer`, `task list-github|import-github|list-jira|import-jira`. Enterprise: `audit`, `commit-template`, `workspace`, `admin pack|contract`, `admin plugin install`, `console --serve`.
+**Editions**: the same source builds a Community, a Team and an Enterprise `nool`. Commands marked *[Team]* or *[Enterprise]* below exist only in that edition and above; a lower edition prints the upgrade hint and exits 4, and the Team/Enterprise binaries verify a lease before running them (`nool admin account trial`, `nool admin account activate <key>`, `nool upgrade --edition team|enterprise`). Team: `agent`, `announce`, `council`, `eval`, `explore`/`inquiry`, `fleet`, `order`/`flow`, `harness`, `msg`, `persona`/`soul`, `playbook`, `pr`, `review`, `steer`, `task list-github|import-github|list-jira|import-jira`. Enterprise: `audit`, `commit-template`, `workspace`, `admin pack|contract`, `console --serve`. `admin plugin install` is in every edition. The Aram gate loads at most 3 policies on Community and 11 on Team, counting WASM modules and DSL rules together; Enterprise has no limit.
 
 ---
 
@@ -60,6 +60,9 @@ Find conflicts, context, learnings, and similar work.
 - `nool discover similar "<query>"`: find similar work by topic or approach.
 - `nool discover features`: discover logical feature boundaries in the project.
 - `nool discover lift`: save discovered feature boundaries into the graph.
+- `nool discover shortcuts [--json]`: list the deliberate shortcuts left in source files, one `path:line  <limit>  -> <when to upgrade>` per marker (`[no upgrade trigger]` when none is given), then a count. Always exits 0.
+
+A shortcut marker is a comment of the form `shortcut: <the known limit>, <when to upgrade>` (after `//`, `#`, `/*`, `--` or `<!--`); Markdown and other prose files are not scanned.
 
 `nool discover conflicts <nodes>` exits **3** on a genuine conflict (back off and retry) and `0` otherwise — check the exit code, not the printed output. `announce intent` and `try new --nodes` exit 3 the same way when a foreign lease already covers the scope. Called with no node ids `discover conflicts` prints a usage hint and exits `0`, so an announcement made without `--target-nodes` participates in no conflict detection at all.
 
@@ -90,7 +93,7 @@ Generate a candidate Knot.
 - `--interactive`: guided mode for beginners.
 - `--detailed`: show all affected nodes in blast-radius warnings.
 
-Shortcut: `nool propose --all --intent "..." --solidify`.
+Shortcut: `nool propose --path <file>… --intent "..." --solidify`. Name the files you changed: `--all` sweeps every dirty file, including other agents' work in a shared tree, so keep it for a `nool try` worktree. Propose only code that builds.
 
 ### `nool solidify`
 Finalize the current candidate Knot: sign + append to the DAG, auto-mirror to Git (Bifrost).
@@ -430,6 +433,9 @@ Create and manage persistent model personas — budget-capped identities.
 ### `nool council`
 Run a configured consortium (multi-model LLM council) on the working-tree diff and print each member's verdict plus the quorum/veto outcome.
 - `--consortium <name>` (required), `--diff-file <file>`, `--json`.
+- Maintainability lens (reviewer-only): a strict over-complication review. In a council, add `"soul:maintainability-reviewer"` to a `[consortium.<name>].members` list (the soul is declared in `nool.toml`, charter `charters/maintainability-reviewer.md`). In a `nool code` fleet, end a reviewer's model with `+maintainability` (`--reviewer '!z-ai/glm-5.3+maintainability'`, `--reviewer ollama:qwen3:8b+maintainability`); the suffix is not part of the model id.
+- The lens reviewer's DENY is filtered before it counts: a `FINDING` block is kept only with a `path:line`, a problem, a fix, and a concrete `case: <input> -> <result>` or a `simpler:` line naming in backticks what is deleted. A DENY with no finding kept is no verdict (council: `Abstain`), never a denial.
+- Credit: review questions adapted from cursor-team-kit `thermo-nuclear-code-quality-review` (MIT © 2026 Cursor); finding discipline from `ponytail-review` (MIT © 2026 DietrichGebert).
 
 ### `nool explore`
 Inspect the structured exploration tree — candidate directions, evidence, distilled insights.
@@ -462,7 +468,7 @@ Render the model-facing TOON work order for an agent (see above).
 Coordinate a polyglot workspace of nested Nool projects (Org→Dept→Team→Project).
 - `nool workspace init`: generate `workspace.toml`, pre-populated with discovered projects.
 - `nool workspace status`: project tree, declared edges, order.
-- `nool workspace doctor`: reconcile declared config vs discovered projects.
+- `nool workspace doctor [--recursive]`: reconcile declared config vs discovered projects; `--recursive` also runs `nool doctor` per project and names projects whose grants are for another organisation.
 - `nool workspace goal [--decompose <target>=<task>]`: build a goal (fan-out or absorb).
 - `nool workspace goals | goal-status`: list goals / per-project completion.
 - `nool workspace insights | telemetry`: roll up insights / cost across children.
@@ -498,6 +504,13 @@ Validate and preview the effective enterprise commit-message template.
 ### `nool admin`
 Manage account settings, plugins, and billing.
 - `account`, `plugin`, `pack` (verify/install governance packs), `gc`, `channel`, `team`, `train-dict`, `reconcile`, `reindex-graph`, `contract`.
+- `nool admin team add --id <key> [--role <role>] [--scope <glob>]... [--expiry-days <n>]`: grant a key a role (`admin`, `approver`, `editor`, `planner`, `reviewer`, `coordinator`, `releaser`, `auditor`, `steer:<role>`). Enforced where the issuer is trusted (`[governance] issuer_keys`, a licence's organisation keys, or a workspace's `[workspace.governance]`). At a workspace root the one grant lands in every repository beneath it.
+- `nool admin team list`: every grant and whether it stands; at a workspace root, per repository. `nool admin team key`: this machine's public key.
+- `nool admin revoke <grant-id | key> [--reason <text>]`: end a grant, or every grant of a key.
+- `nool admin plugin pin`: pin the policy set in `[aram] policies`; land `nool.toml` afterwards.
+
+### `nool login [--hub <url>]`
+Sign in at the organisation's identity provider (device flow) and land the grants its control plane issues for this machine's key. `nool propose` renews them before they run out.
 
 ### `nool audit`
 Produce a compliance report (see §11).
@@ -594,7 +607,14 @@ Run a goal as a coding session on this repository (7.9.0, Community). The model 
 - **Retries.** A model call that fails with a rate limit, an overload, a 5xx or a timeout before any tool call arrived is re-sent after 2 s, 4 s, 8 s (at most 30 s), up to `[code] retry_attempts` times (default 3; 0 turns it off). An interrupt cuts the wait short. A context-length error compacts the transcript once and re-sends. A rejected key, an unknown model or exhausted retries pause the session and say which.
 - **Context budget.** The context primed at session start gets 1% of the model's context window (1500 to 6000 tokens); `[code] prime_budget_tokens` sets it. After `declare_scope`, `<nool_state>` shows the scope's blast radius.
 - **Leases outside the scope.** Before `write`, `edit` or `apply_patch` touches a file outside the declared scope, the session checks that file's lease; a file another agent holds is refused, naming the holder, before anyone is asked to approve the write.
-- **Playbooks.** `[code.playbooks.<name>]` holds `steps` and `checks`. `--playbook <name>` or `/playbook <name>` starts the plan from the steps, and every check must pass in the completion check before the goal can land.
+- **Playbooks.** `[code.playbooks.<name>]` holds `steps` and `checks`. `--playbook <name>` or `/playbook <name>` starts the plan from the steps, and every check must pass in the completion check before the goal can land. `/playbook` alone lists them.
+- **Built-in playbooks.** Five need no `nool.toml` entry; a `[code.playbooks.<name>]` of the same name replaces one. Adapted from pstack's poteto-mode playbooks, MIT, © 2026 Lauren Tan (https://github.com/cursor/plugins/tree/main/pstack).
+  - `bug-fix`: reproduce first, narrow the cause with evidence, make the smallest fix at the root cause, re-run the repro, leave no speculative change in.
+  - `feature`: read the affected code, name the data shape first, make the smallest complete change across callers, tests and fixtures, test the behaviour, verify on the real surface.
+  - `refactor`: pin the behaviour with tests, move in small steps that keep them green, delete what the change orphans, keep behaviour changes out.
+  - `perf`: measure a baseline, find what limits it, change one thing, re-measure the same way, report before and after.
+  - `investigation`: read-only; answer with `path:line` citations and say what was not checked.
+- **Built-in checks.** A check is a shell command or one of two that work in any repository and language, which is all the built-in playbooks use: `nool:evidence` (an affected test or a passing declared check must exercise the change; otherwise the check fails instead of passing as unchecked) and `nool:no-changes` (the branch changes no file; `investigation`). Neither counts as evidence for the `verified` verdict.
 - **Steering.** With `[steer]` enabled, `<nool_state>` lists each checkpoint with its role and trigger, and the completion check adds an advisory `steer` step naming the approval landing will need (e.g. ciso at pre-push for a sensitive path). Solidify still enforces the checkpoints.
 - **Doom-loop stop.** The same write, edit or shell call three steps running pauses the session with a reason; the same read three times is a warning.
 
@@ -622,8 +642,18 @@ The `shell` jail writes the worktree, the private `$TMPDIR`, per-user toolchain 
 [sandbox]
 write_paths = ["~/work/shared-fixtures"]
 network = "off"   # strict: no loopback either
+# network = "allowlist"                  # package registries through a proxy; other hosts refused
+# allow_hosts = ["internal.example.com"]  # more names for the allowlist (subdomains included)
 # mode = "off"
 ```
+- `network = "allowlist"` keeps the outside network cut and sets `HTTPS_PROXY`/`HTTP_PROXY` to a loopback proxy that lets through the package registries (crates.io, npm, PyPI, the Go proxy, RubyGems, Maven Central, Gradle plugins) and `allow_hosts`. Other hosts get a `403` naming the setting. Enforced on macOS; on Linux requests fail closed.
+- TUI input: a `\` before Enter, Alt+Enter, Ctrl+J (and Shift+Enter where the terminal reports it) start a new line; Up/Down move between lines; long lines wrap in the box.
+- `nool code metrics [--days N] [--json]` prints the product metrics from this repository's session logs (verified goals promoted per week, one-shot rate, promote rate, cost and time per verified goal).
+- `nool init` prints a summary of under ten lines (`--verbose` for every step) and installs agent hooks only for the coding agents present. `nool prune --telemetry --quarantine` runs the two 90-day retention sweeps on demand.
+- `nool admin revoke <key>` at a workspace root revokes in every member repository that holds a grant of the key.
+- `nool thread handoff --name <thread> [--summary <text>] [--to <key>] --solidify` seals a Handoff knot; `nool code` does it for its pre-compaction handoff when `[cli] current_thread` is set.
+- `[code] checks = ["<command>", ...]` in `nool.toml`: commands every completion check runs (single session, fleet children, the fleet's integrated check). `nool code policy accept <id>` adds a suggested check there (or writes a suggested policy to `policies/`), lands it and records a finding and an attestation, in one command.
+- `[code] reasoning_effort = "low-first"` starts a session at low effort and raises it one level per failed completion check (off by default).
 
 ### `nool code acp`
 Run Nool as an Agent Client Protocol (ACP v1) agent over stdio: JSON-RPC 2.0, one message per line (7.10.0). Editors that speak ACP run it with no other setup, e.g. Zed: `"agent_servers": {"Nool": {"command": "nool", "args": ["code", "acp"]}}`. Session steps stream as ACP updates (message and thought chunks, tool calls, plan, mode, usage); permission requests go to the editor.
@@ -657,10 +687,10 @@ Notifications when a session's work is done (7.10.0), configured in `~/.nool/cod
 
 ### `nool code doctor` / `trust` / `mcp` / `plugin`
 - `nool code doctor [--all]`: every MCP server, instruction file, skill, hook, slash command and plugin a session imports, where each comes from, and what was skipped and why. `--all` also starts stdio MCP servers to list what they offer.
-- `nool code trust [--revoke]`: trust this repository so its project-level MCP servers, hooks and plugins load (they run commands).
+- `nool code trust [--revoke]`: trust this repository so its project-level MCP servers, hooks and plugins load (they run commands): `nool.toml` `[code.hooks]` and `[tools.mcp]`, `.claude/settings*.json` hooks, `.mcp.json` and friends, `.nool/plugins`, `.nool/tools`. Editing any of them voids the trust until given again.
 - `nool code mcp list|add|remove|login|logout`: the MCP catalog and your servers in `~/.nool/code.toml`; `add <name>` from the catalog or `add <name> -- <command> [args...]`; `login` signs in to an OAuth HTTP server and stores tokens in the OS credential store.
 - `nool code plugin list|add <source>|remove <name>`: Claude Code-format plugins in `~/.nool/plugins`, installed from a directory, a git URL, or a plugin already installed in Claude Code.
 
 ---
 
-*Last updated: October 6, 2026 for Nool v7.17.0*
+*Last updated: October 12, 2026 for Nool v7.18.0*

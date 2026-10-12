@@ -1,18 +1,18 @@
 ---
 name: nool-commands
-description: Comprehensive expert guidance for the Nool CLI (v7.17.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, multi-agent coordination, autonomous agent harness (nool code), ACP v1 stdio protocol, offline voice TTS, and provider registry. Optimized for AI coding agents.
+description: Comprehensive expert guidance for the Nool CLI (v7.18.0). Covers semantic VCS, automated architectural discovery, high-fidelity visualization, semantic planning (RFC-0001), interactive review (RFC-0008), evidence-based transitions, multi-agent coordination, autonomous agent harness (nool code), ACP v1 stdio protocol, offline voice TTS, and provider registry. Optimized for AI coding agents.
 license: Apache-2.0
 metadata:
-  version: "7.17.0"
+  version: "7.18.0"
   author: nool-core-team
-compatibility: Requires nool CLI v7.17.0+
+compatibility: Requires nool CLI v7.18.0+
 allowed-tools: bash(nool *)
 ---
 
 
 # Nool CLI
 
-Nool is a Semantic-Agentic Commutative VCS (currently **v7.17.0**). The source of truth is the **Knot DAG**, not text.
+Nool is a Semantic-Agentic Commutative VCS (currently **v7.18.0**). The source of truth is the **Knot DAG**, not text.
 
 **When this applies:** any project tracked by Nool — confirm with `nool status`. Note that the presence of a `.nool/` directory alone is *not* proof: `~/.nool` is the machine-level identity/config dir (`config.toml`, `identity.key`), and tooling can create a bare `.nool/` as a side effect of writing a log there. A real ledger contains artifacts like `knots/`, `nool.db`, `manifest.toon`/`manifest.json`, `git_mirror/`, or `memory/`. When scripting a check, look for one of those, not just the directory. In such a project, **use `nool` for VCS, task management, and debugging** instead of raw `git`. In a repo with no `.nool/`, use git normally (or `nool init` to start tracking). Nothing here is specific to one repository — it is the general workflow for working in any Nool-tracked codebase, in any language.
 
@@ -30,7 +30,7 @@ When unsure of flags or subcommands, run `nool <command> --help` — the CLI is 
 
 ## Editions and exit code 4
 
-Nool ships as three binaries built from one source, all named `nool`: **Community** (free forever, 1,000 knots per rolling month, single seat), **Team** (fleets, council, steer, playbooks, announce/leases, personas, eval, PR summaries, exploration, GitHub/Jira import, MCP handoff) and **Enterprise** (Team plus workspace roll-ups, audit, commit templates, governance packs, contracts, plugin install, `console --serve`, air-gapped `nool.lic`). `nool version` and `nool status` print the edition.
+Nool ships as three binaries built from one source, all named `nool`: **Community** (free forever, 1,000 knots per rolling month, single seat), **Team** (fleets, council, steer, playbooks, announce/leases, personas, eval, PR summaries, exploration, GitHub/Jira import, MCP handoff) and **Enterprise** (Team plus workspace roll-ups, audit, commit templates, governance packs, contracts, `console --serve`, air-gapped `nool.lic`). `nool version` and `nool status` print the edition. `nool admin plugin install` works in every edition. Policies, counted as WASM modules plus DSL rules, are limited to 3 on Community and 11 on Team, with no limit on Enterprise.
 
 - A lower edition answers a higher edition's command with an upgrade hint and **exit 4** (`unavailable`), never a clap usage error: `nool fleet plan` on Community prints ``fleet` is in Nool Team → nool admin account trial · nool.dev/pricing``. With `--json` the denial is `{"outcome":"unavailable","reason_code":"EDITION_REQUIRED",…}`.
 - Team and Enterprise binaries are **lease-gated**: without a valid lease their command groups exit 4 with `reason_code: LEASE_REQUIRED`, while `status`, `log`, `task`, `thread`, `propose`, `solidify` and every other single-player command keep working in every edition. Activate with `nool admin account activate <key>`, start a 30-day Team trial with `nool admin account trial`, switch binaries with `nool upgrade --edition team|enterprise`.
@@ -44,12 +44,18 @@ Run these in order to land a change:
 
 ```bash
 nool status --json                                       # 1. read repo state, pending proposals, threads
-nool propose --all --intent "fix rate limiting"           # 2. stage working-tree change as a candidate Knot
-nool solidify                                            # 3. sign + append to DAG, auto-commit to Git mirror
+nool propose --path src/limits.rs --path tests/limits.rs --intent "fix rate limiting"
+                                                         # 2. stage exactly the files you changed
+nool solidify --candidate <id>                           # 3. seal that candidate (id printed by propose)
 nool push <remote>                                       # 4. optional: replicate Knot history
 ```
 
-Shortcut: `nool propose --all --intent "..." --solidify` does steps 2–3 in one call. Add `--push [remote]` to also push.
+Shortcut: `nool propose --path <file>… --intent "..." --solidify` does steps 2–3 in one call. Add `--push [remote]` to also push.
+
+**Name your files, and land only code that builds.**
+- `--all` takes every dirty file in the tree. In a shared tree that includes other agents' unfinished work, which would land under your intent. Use it only in a `nool try` worktree or a tree nobody else edits.
+- The candidate queue is shared too: a plain `nool solidify` seals from the oldest candidate, which may not be yours. `--candidate <id>` seals exactly your own.
+- Propose at points where the code builds, after running the build or type check yourself. Full validation (the default) refuses a proposal whose integrity driver fails; `--fast` skips that check until `nool validate`, so never use it to get broken code past the gate.
 
 **Close the fast-mode loop.** `--fast` is an explicit opt-in, and it *defers* validation rather than skipping it — the deferred half only runs when something calls for it. If you have been landing knots with `--fast`, settle the debt periodically:
 
@@ -68,7 +74,7 @@ Most mistakes here are reaching for coordination machinery on solo work, or skip
 
 | Situation | Verb |
 |---|---|
-| Ordinary change you intend to keep | `propose --all --intent "..." --solidify` |
+| Ordinary change you intend to keep | `propose --path <file>… --intent "..." --solidify` |
 | Speculative work you might throw away wholesale | `try new <name>` → work → `try diff`/`try impact` → `promote` or `discard` |
 | Broad or risky edit | `debug blast-radius <path>` first, then propose with `--full` |
 | Another agent or human may touch the same files | `announce intent --target-nodes <paths>` → `discover conflicts <paths>` → propose |
@@ -551,7 +557,7 @@ nool code model set mistral:devstral-latest [--repo]   # saved default; list | s
 nool code voice doctor | setup | speak "<text>" | transcribe <file> | config --speak summaries
 nool code notify add slack --url-env SLACK_WEBHOOK_URL  # sound|desktop|webhook|slack|discord|teams|command; list|test|enable|disable|remove
 nool code doctor [--all]                       # what a session imports (MCP, skills, hooks, plugins) and why anything was skipped
-nool code trust [--revoke]                     # allow this repo's MCP servers, hooks and plugins to load
+nool code trust [--revoke]                     # allow this repo's MCP servers, hooks and plugins (incl. nool.toml [code.hooks]/[tools.mcp]) to load
 nool code mcp list|add|remove|login|logout     # nool code plugin list|add <source>|remove <name>
 ```
 
@@ -563,6 +569,8 @@ The `shell` jail already writes toolchain temp/cache dirs and a shared build cac
 [sandbox]
 write_paths = ["~/work/shared-fixtures"]   # extra writable roots
 network = "off"                            # strict: no loopback either
+# network = "allowlist"                    # package registries (and allow_hosts) through a proxy; other hosts refused
+# allow_hosts = ["internal.example.com"]
 # mode = "off"                             # run commands unjailed
 ```
 
@@ -588,6 +596,7 @@ network = "off"                            # strict: no loopback either
 - **Branches follow the repository's conventions.** When the user asks for a feature, bug fix, hotfix or release branch, run `nool branch conventions` (or read it from the session-start context), pick the kind by purpose — feature: new behaviour; bug: a fix for the next release; hotfix: an urgent fix to what is already released; release: stabilising a version — and create it with `nool branch new <kind> "<what it is for>" [--ticket <id>] [--version X.Y.Z]`, which names it by the configured pattern and starts it from the kind's base (for example `develop` for features, `main` for hotfixes). Never invent a name or pick the base yourself; when the pattern needs a ticket or version you do not have, ask. `nool branch check [<name>]` says whether a name conforms. With `[branches]` in nool.toml, `git switch -c`/`checkout -b`/`branch <name>` with any other name is refused.
 - **Fleets can run children on cloud sandboxes:** `nool code --fleet "<goal>" --pool local:4 --pool daytona:8` (or `local-process:N` to exercise the remote path on this machine). Children land the same way wherever they ran; `--pool modal:N` uses Modal (the `modal` Python package, `modal setup` done). Cloud pools need `NOOL_SANDBOX_BUILD` (a Linux release archive); Daytona also needs `DAYTONA_API_KEY`. Children reach the model through the fleet's gateway over a `cloudflared` quick tunnel (or `NOOL_GATEWAY_URL`); a sandbox that can't reach it fails at start with the reason.
 - **Route and operate running fleets:** `--route <task-or-glob>=<pool>` pins tasks to a pool (`--pool daytona:4,name=big,model=tunnel|hub|url:<url>` names pools and picks how their children reach the model; `hub` relays through `[coordination] hub_url` with the hub token); other tasks take the first pool with a free slot. While a fleet runs, `nool fleet ps` / `nool fleet status` show its pools, routes, each task's pool, sandbox and spend, and `nool fleet ctl task cancel|retry|route …`, `route …`, `pool add|drain|resize …` change it — the same commands as `/fleet …` inside `nool code`. Prefer these over killing processes or editing files under `.nool/code/`.
+- **Wide fleets:** `[fleet] provider_requests_per_minute` / `provider_tokens_per_minute` cap how many children run at once across every pool (slots beyond it wait). A cloud pool on a quick tunnel is refused above 200 slots: add `,model=hub` or `,model=url:<url>`. On Modal and `local-process` the clone is uploaded once per pool (a seed) and later children get only the commits landed since. `[fleet] check_every = 8` runs the integrated check after every 8 landings and stops the fleet when one fails (0 = only at the end). `[fleet] isolate_interfering = true` keeps two tasks apart when one's blast radius covers the other's scope, when a blast radius cannot be computed (a checkout that never ran `nool discover` has no index, so its tasks run one at a time), or when a task changes a root manifest or lockfile.
 - **Fleets land on a named branch:** `nool code --fleet "<goal>" --into feature/x [--base develop]` (also `nool fleet plan --run … --into`, `nool fleet start … --into`) switches the repo to that branch first (creating it from the base) and every task lands there.
 - **Leases are per branch:** overlap with a lease on another branch is a warning (`also being changed on <branch>`), not a conflict — expect to reconcile those files when the branches merge. Same-branch overlap still conflicts.
 - `nool hooks mcp --agent <claude|cursor|gemini|windsurf|opencode> [--global] [--remove]` — register Nool's MCP server with another coding agent (project config, or the user config with `--global`, which also installs this skill for that agent).
@@ -601,7 +610,7 @@ network = "off"                            # strict: no loopback either
 
 ## Scenario quick-reference
 
-- **Land a small change** → `nool propose --all --intent "..." --solidify`.
+- **Land a small change** → `nool propose --path <file>… --intent "..." --solidify` (name the files; `--all` only in a try worktree).
 - **Risky/broad edit** → `nool debug blast-radius <path>` first, then propose with `--full`.
 - **Touching shared paths with other agents** → `announce intent --target-nodes <paths>` → `discover conflicts <paths>` → propose.
 - **Spiking something you may throw away** → `try new <name>` → work → `try impact` → `promote` or `discard`.

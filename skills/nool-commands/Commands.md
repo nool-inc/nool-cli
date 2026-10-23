@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.18.0
+**Version**: 7.21.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -21,7 +21,7 @@ Many commands also accept `--json` for machine-readable output (e.g. `status`, `
 ### `nool init`
 Initialize a new Nool ledger and generate an identity key.
 - `--from-git <branch>`: import existing git history on this branch.
-- `--transport <git|pijul>`: transport backend (default `git`).
+- `--transport git`: transport backend (`git` is the only one; the flag is kept for scripts).
 
 ### `nool migrate`
 Move Nool files from legacy/previous-version locations (root-level `nool.db`/`knots.redb`, `.claude/nool.db`, in-project license keys) into the current canonical layout.
@@ -52,6 +52,12 @@ Announce intent before starting work. Files a fencing lease (v7.0 "leases v2"): 
 - `nool announce wait <scope> --timeout-ms <n>`: block until the scope frees, or exit 3 on timeout. Under `[coordination] backend = "hub"` this long-polls the hub instead of spin-polling.
 - `nool announce renew <id>` / `nool announce release <id>`: extend or give up a held lease early.
 
+### `nool lease`
+See who holds which lease, wait for one to free, or release your own (the read/release side of `announce`, also used by `try new --nodes` and fleets).
+- `nool lease status [--json]`: active leases: holder, mode, expiry, fencing number (`grant_seq`), claim state and origin.
+- `nool lease wait <paths>... [--timeout-ms <n>] [--as-agent <id>]`: block until no other agent holds a lease over the paths; exit 3 on timeout.
+- `nool lease release <id> [--as-agent <id>]`: release a lease you hold; exit 3 when another identity holds it.
+
 ### `nool discover`
 Find conflicts, context, learnings, and similar work.
 - `nool discover conflicts`: check for overlapping active announcements before proposing.
@@ -60,6 +66,7 @@ Find conflicts, context, learnings, and similar work.
 - `nool discover similar "<query>"`: find similar work by topic or approach.
 - `nool discover features`: discover logical feature boundaries in the project.
 - `nool discover lift`: save discovered feature boundaries into the graph.
+- `nool discover bootstrap [--max-facts <n>] [--restart] [--json]`: build a resumable, evidence-backed architecture map for an existing repository (re-running resumes where it stopped; `--restart` starts over).
 - `nool discover shortcuts [--json]`: list the deliberate shortcuts left in source files, one `path:line  <limit>  -> <when to upgrade>` per marker (`[no upgrade trigger]` when none is given), then a count. Always exits 0.
 
 A shortcut marker is a comment of the form `shortcut: <the known limit>, <when to upgrade>` (after `//`, `#`, `/*`, `--` or `<!--`); Markdown and other prose files are not scanned.
@@ -68,9 +75,23 @@ A shortcut marker is a comment of the form `shortcut: <the known limit>, <when t
 
 With `[coordination] backend = "git"` or `"hub"`, leases replicate beyond one machine: `"git"` as commit-backed `refs/nool/claims/*` (every write is a force-with-lease CAS — stale writes are refused, never silently clobbered); `"hub"` as atomic, expiring grants from a `nool-hub-server` with OIDC principals and org/repo ACLs.
 
-### `nool msg <recipient_key> <message>`
-Send a direct 1:1 message to another agent — the way to coordinate after `nool discover conflicts` reports an overlap.
-- `-t, --ttl <ttl>`: message lifetime.
+### `nool msg` *[Team]*
+Agent-to-agent messages on the local bus — the way to coordinate after `nool discover conflicts` reports an overlap.
+- `nool msg send --to <agent> "<text>"`: send to an agent's inbox.
+- `nool msg inbox`: your unacknowledged messages, oldest first.
+- `nool msg ack <offset>`: acknowledge a message once its effect is durably recorded.
+
+### `nool handoff`
+Handoffs delivered to your inbox (a task offered to you by another agent).
+- `nool handoff status [event]`: handoffs you sent or received, delivered and accepted shown separately; also records new deliveries and escalates overdue offers.
+- `nool handoff accept <event>`: take the handoff's task (accepting twice is a no-op). `nool handoff reject <event>`: decline it.
+
+### `nool notice`
+Change notices from projects this one depends on (workspace notices).
+- `nool notice list` (unanswered first) / `nool notice show <id>` (with its replies).
+- `nool notice reply --verdict <verdict> <id>`: answer; the reply is delivered to the sending project.
+- `nool notice override --reason <why> <id>`: lift the gate a blocking reply put on a notice this project sent (admin role; audited).
+- `nool notice process`: turn unprocessed contract and breaking notices into tasks and, with `on_notice = auto_fix`, run a scoped session on each (receiver side).
 
 ---
 
@@ -80,7 +101,10 @@ Send a direct 1:1 message to another agent — the way to coordinate after `nool
 Generate a candidate Knot.
 - `-i, --intent "<description>"`: what you're changing.
 - `--all`: use all modified, deleted, staged, and untracked worktree paths.
+- `--detach`: run the propose as a detached background landing and print its id; `nool land wait <id>` returns the verdict.
+- `--json`: print the semantic signal and stage timings as JSON; the last line is one outcome object `{"outcome":"ok","candidate":…,"knot":…,"try_branch":…}` (`knot` set with `--solidify`). A refusal prints the `{outcome, reason_code, message}` envelope on stderr.
 - `--path <file>...`: specific changed files.
+- `--hunks <file>#<start>-<end>` (repeatable): land HEAD plus only the diff hunks wholly inside that working-tree line range; the file's other hunks stay uncommitted. A range that cuts a hunk or holds none is refused with the file's hunk list.
 - `-t, --thread <name>`: associate with a thread.
 - `-k, --kind <fn|test|config|doc>`: knot kind (auto-detected if omitted).
 - `--fast`: fast mode, <5s, deferred validation. An explicit, unsafe opt-in — `--full` is the default.
@@ -94,6 +118,11 @@ Generate a candidate Knot.
 - `--detailed`: show all affected nodes in blast-radius warnings.
 
 Shortcut: `nool propose --path <file>… --intent "..." --solidify`. Name the files you changed: `--all` sweeps every dirty file, including other agents' work in a shared tree, so keep it for a `nool try` worktree. Propose only code that builds.
+
+### `nool land wait <id>`
+Wait for a landing started with `nool propose … --detach`, which runs the propose as a detached background process and prints its id at once. `land wait` blocks until it ends, prints one line (`landed <knot>`, `staged candidate <id>`, or `refused (<outcome>, <reason>): <message>`) and exits with the landing's own exit code; exit 3 if it is still running at the timeout. Use it instead of backgrounding a propose and polling its output.
+- `--timeout-ms <n>` (default 1800000), `--json`.
+- The landing's full output is in `.nool/landings/<id>.log`.
 
 ### `nool solidify`
 Finalize the current candidate Knot: sign + append to the DAG, auto-mirror to Git (Bifrost).
@@ -121,10 +150,12 @@ Inspect and drop queued candidates awaiting `solidify` — the supported way out
 Short-lived experiment branches; never enter the DAG until promoted.
 - `nool try new <name> [--from <knot>] [--intent "..."]`: start a branch. Metadata-only by default (`[try] mode = "shared"`) — edits stay in the shared working tree.
 - `nool try new <name> --worktree [--nodes <scope>]`: materialize an isolated git worktree under `.nool/try/<name>/` (v7.0). `--nodes` files a fencing lease for the scope atomically — a foreign hold refuses with exit 3 and creates no branch. Work from inside the checkout; every `propose` there renews the lease.
+- `nool try worktree <name>`: materialize an existing (metadata-only) try branch as an isolated worktree under `.nool/try/<name>/`. Idempotent.
 - `nool try list`: list active try branches.
 - `nool try show <name>`: status of a try branch.
 - `nool try diff <name>`: unified diff.
 - `nool try impact <name>`: impact analysis, drift, and `ready_to_promote`.
+- `nool try rebase <name>`: merge what main changed since the branch's base into its worktree (3-way, per file) without sealing anything; conflicts are left as `diff3` markers to resolve before `promote`.
 - `nool try promote <name>`: 3-way merge into main history against the recorded base — drift on main is computed per-path; a real conflict exits 3 and leaves `diff3` markers in the worktree instead of guessing.
 - `nool try discard <name>`: discard, release the lease, and tear down the worktree.
 
@@ -143,9 +174,16 @@ Create a semantic tag for the current state. `-s, --solidify` saves immediately.
 Promote a local knot to the next saved state.
 - `-p, --push <remote>`: push to a remote after promotion.
 
-### `nool approve`
-Record an approval or rejection for a knot or thread.
-- `--id <id>`, `-c, --comment "<note>"`, `-r, --reject`, `-s, --solidify`.
+### `nool approve <request>`
+Record a signed decision (`human-approval` attestation) on an approval request, or on a knot when no request names it. Refused when you authored the change.
+- `-c, --comment "<why>"` (required), `-r, --reject`, `--push <remote>` (send the decision on your chain), `--attestation "<statement>"` (needed to approve a high-risk checkpoint), `--id <id>` (the older spelling of the positional).
+
+### `nool approval`
+Approval requests (team approval).
+- `nool approval wait <request> [--remote origin] [--timeout-secs <n>]`: report the decision (exit 0 approved, 2 rejected, 3 timeout); `nool solidify` then lands the candidate.
+- `nool approval list [--remote origin] [--json]`: every request and where it stands; "yours to decide" marks your roles.
+- `nool approval show <request> [--json]`: the rule, decisions and comments. `--hub` prints the hub's own record instead (status, decisions, viewers, the live session relay), as JSON.
+- `nool approval sweep [--quiet]`: what the daemon runs after fetching: announce new requests, land approved queued candidates.
 
 ---
 
@@ -155,7 +193,7 @@ Record an approval or rejection for a knot or thread.
 Push all unsent changes to a remote (URL or name).
 
 ### `nool pull <remote>`
-Pull changes from a remote and apply them locally.
+Pull changes from a remote and apply them locally. `--branch <b>` merges that branch of the remote (a name, URL or git bundle) into the checked-out branch instead, as `nool pr merge` does.
 
 ### `nool sync <remote>`
 Synchronize with a remote in both directions.
@@ -169,8 +207,14 @@ Background synchronization daemon (signs git-mirror commits, single-instance loc
 
 ### `nool bridge`
 Manage the Git bridge and large-file storage.
-- `lfs`, `mirror-repair`, `recover-ledger`, `status`, `add-remote`, `remove-remote`, `watch`.
+- `nool bridge status`: auto-sync configuration and recent push history.
+- `nool bridge add-remote <url>` / `nool bridge remove-remote <url>`: the remotes `solidify` auto-pushes to.
+- `nool bridge watch`: start the sync watch daemon.
+- `nool bridge mirror-repair`: repair or rebuild the local Git mirror.
+- `nool bridge recover-ledger [--dry-run]`: rebuild the ledger from the Git mirror (mirror branch plus detached refs) without a remote, when the ledger has fewer knots than the mirror (an interrupted sync or storage migration). Idempotent: only missing knots are inserted.
+- `nool bridge lfs init` / `nool bridge lfs track <pattern>` / `nool bridge lfs status`: git-lfs for large files.
 - `nool bridge reindex`: fill the ledger's commit-to-knot index from the mirror pointer's history, the legacy per-knot refs and the detached chains, once. Lookups (`bisect`, `try`, `compare`) answer from the index afterwards instead of walking history. Run it after upgrading a repository that predates the index, or after `recover-ledger`.
+- `nool bridge adopt [oids…]`: adopt the commits on this branch that carry no knot (plain git, a web merge, a bot) as one knot tagged `nool:foreign:<oid>` per commit, so they enter the DAG. With ids, they must name every foreign commit on the branch.
 - `nool bridge prune-knot-refs`: delete `refs/knots/*` refs whose commit the mirror branch already carries. Branch knots no longer mint a ref each (one ref per commit made every push, fetch and hook run scale with history); detached knots keep theirs. Lists by default; `--apply` deletes locally, `--remote` also on that remote.
 
 **The mirror layout (7.1.x).** Each branch owns its pointer `refs/nool/mirror/<branch>`, moved in the same ref transaction as the solidify commit; `refs/nool/git-mirror` remains a read-only alias of the default branch. Detached knots (attestations) append to per-writer chains `refs/nool/detached/<writer>`. `nool push` sends the checked-out branch, then its pointer, then the legacy refs and chains as separate atomic groups; `nool pull` ingests incrementally from the recorded tip.
@@ -219,6 +263,14 @@ Assemble a single ranked, budgeted GroundingPacket for a routing-change-style ta
 - `--budget-tokens <n>` (default 2000): token budget for the assembled packet.
 - `--json`: emit the packet as JSON.
 
+### `nool outline <file>`
+One line per symbol in a file, `start-end kind owner::name` (functions, methods, structs, impls, classes, traits...), or one line per heading in Markdown. Parsed live from disk, so it needs no index and is never stale. Use it instead of reading a whole file to find where things are.
+- `--json`: emit the outline as JSON.
+
+### `nool show <file>::<symbol>`
+Print one symbol's source with line numbers and its doc comment: `nool show src/a.rs::run`, `src/a.rs::Server::start`, or `docs/x.md::Setup` for a Markdown section. Use it instead of `grep -n` followed by a ranged read. When an unqualified name matches several small symbols it prints them all; when they are large it lists them so you can qualify (`Owner::name`); when nothing matches it prints the outline and exits 1.
+- `--json`: emit the matches (with line ranges) and text as JSON.
+
 ### `nool query`
 Runtime semantic queries.
 - `nool query context <id> [--depth <n>]`: token-optimized semantic neighborhood for an entity/feature.
@@ -230,6 +282,8 @@ Runtime semantic queries.
 - `nool query materialize <ids>`: reconstruct content for knots.
 - `nool query runtime-evidence`: search runtime evidence sidecars.
 - `nool query validate <paths>`: validate files without proposing.
+- `nool query history <paths>... [--limit <n>] [--json]`: who last changed these paths, when and why: the intents of the knots that touched each, newest first, with their threads.
+- `nool query affected-tests --paths <paths> [--format <fmt>]`: the test files in the dependents closure of the paths, with per-language name filters (the same selection the ghost run uses).
 
 ---
 
@@ -275,25 +329,33 @@ Rewind workspace state (see §1).
 ### `nool task`
 Track units of work. Lifecycle: Open → Claimed → InProgress → InReview (QA) → Done.
 - `nool task create --name "<name>" [--acceptance "<criterion>"] [--solidify]`: create with explicit or generated draft acceptance criteria.
-- `nool task list` / `board` / `inbox` / `mine` / `show --id <id>`.
+- `nool task list [--active] [--limit <n>] [--json]` / `board` / `inbox` / `mine` / `show --id <id>`. `--active` hides Done, VerifiedDone, Cancelled and Removed tasks; `--limit` keeps the n highest-priority ones.
 - `nool task pick --id <id>`: claim. `nool task start --id <id>`: Claimed → InProgress.
 - `nool task qa --id <id>`: submit for QA review (criteria verified here).
 - `nool task finish --id <id>`: mark done (advisory unless criteria review is required).
 - `nool task verify-done --id <id>`: mark verified-done directly from any state.
 - `nool task assign`, `relate`, `block`, `cancel`, `telemetry --id <id>`.
-- `nool task list-github` / `import-github`, `list-jira` / `import-jira`: import issues as tasks.
+- `nool task edit --id <id> [--name …] [--desc …] [--priority N] [-s]`: change a task's name, description or priority in place; its id, history, links and state are kept.
+- `nool task remove --id <id>`: drop a task from active views, keeping its auditable history.
+- `nool task sync`: import tasks assigned to you from the configured providers (GitHub, Jira).
+- `nool task list-github` / `nool task import-github --repo <owner/repo> --issue <n>`, `nool task list-jira --project <KEY>` / `nool task import-jira --project <KEY> --issue <KEY-n>` (Team): list, or import one issue as a task with explicit (`--acceptance`) or generated draft criteria; `--thread`, `--solidify`.
+- `nool task flow show [--json]`: the active `[tasks.lifecycle]` state machine: states, their core-phase mappings, transitions and guard kinds.
+- `nool task flow check [--json]`: lint it (duplicate/unmapped/unreachable states, unknown transition targets, states with no path to a terminal); non-zero exit on any finding.
+- `nool task flow move --id <task> --to <state> [--evidence <e>] [--role <r>] [--linked-knot <id>] [--solidify]`: move a task to a custom state, evaluating its guards; refuses a state whose core phase does not match the task's current one.
 - `nool task criteria inbox|set|review`: acceptance-criteria management (advisory, never blocks execution).
 
 ### `nool thread`
 Manage intent threads.
-- `nool thread create | list | show [--full] | status | chat | handoff`.
+- `nool thread create | list | show [--full] | handoff`.
+- `nool thread status --name <thread> --status <draft|active|review|released|archived>`: set a thread's status.
+- `nool thread chat <thread> [--message "<text>"] [--ttl <t>]`: add a note to a thread, or view its notes.
 
 ### `nool bug`
 Track bugs.
 - `nool bug report | investigate | link | list | show | wont-fix | duplicate`.
 
 ### `nool inbox`
-Show the notification inbox.
+Show the notification inbox, including approval requests waiting for your roles.
 
 ---
 
@@ -302,10 +364,19 @@ Show the notification inbox.
 ### `nool learn`
 Record a knowledge finding.
 - `--about <subject>` (alias `--topic`), `--kind <root_cause|finding|dependency_insight|reasoning_note>`, `--content "<text>"`, `--knot <id>`, `--supersedes <id>`.
+- `--visibility team|private|restricted|agent` (default `team`; `private` is never pushed; `restricted` and `agent` are Team tiers), `--access user:<key>|role:<name>|agent:<role>` (for `restricted`), `--agent-role <role>` (for `agent`).
+- `nool learn distill [--session <id>] [--pending] [--json]`: distill candidate findings from agent session transcripts into the pending queue (`.nool/learn/candidates/`), reviewed with `nool findings inbox`. Needs `[learn.distill] enabled = true` (it spends model tokens).
+
+### `nool knowledge publish [--kind <k>] [--dry-run]`
+Mint the findings recorded before knowledge became knots as signed `Finding` knots, so they replicate per `[knowledge] replicate`. Running it again publishes nothing twice.
 
 ### `nool findings [subject]`
 Retrieve recorded findings for a file, thread, or topic.
-- `--all`, `--limit <n>`, `--json`, `--kind <kind>`, `--sort <order>`.
+- `--all`, `--limit <n>`, `--json`, `--kind <kind>`, `--sort <order>`; `--topic <subject>` for a topic named like a subcommand.
+- `nool findings inbox [--limit <n>] [--json]`: pending candidates from `nool learn distill`, newest first.
+- `nool findings accept <id>` / `nool findings edit <id> [--content|--subject|--scope|--kind …]` / `nool findings reject <id> --reason "<why>"`: accept a candidate as your finding, change it first, or reject it (remembered, never proposed again).
+- `nool findings set-visibility <id> <tier> [--access …] [--agent-role …]`: re-record one of your findings under a new tier (a finding already pushed stays readable on clones that pulled it).
+- `nool findings digest --scope <scope> [--json]`: a summary of a scope's current findings in at most 1500 characters, every claim citing its finding id; no model needed.
 
 ### `nool enrich "<query>"`
 Recall knowledge; on a miss (below the memory similarity threshold), run bounded self-healing enrichment and record the gap.
@@ -330,7 +401,8 @@ Execute an approved or draft semantic plan.
 - `--plan-id <id>` (required), `--approval-id <id>`, `--staging-root <dir>`.
 
 ### `nool review <target>`
-Review candidate changes (plan ID or thread name) before they are finalized.
+Review candidate changes before they are finalized: a plan ID or thread name, or an approval request.
+- For a request: `--diff` prints each candidate file's patch; `--comment "<text>"` records a signed `review_comment` on it.
 
 ### `nool pr`
 Render nool's review context for a GitHub PR. Nool renders the facts; CI decides how to post them.
@@ -338,7 +410,9 @@ Render nool's review context for a GitHub PR. Nool renders the facts; CI decides
 
 ### `nool evidence`
 Show evidence for why a transition was accepted or rejected.
-- `nool evidence plan|knot|merge <id>`, `export`, `attach-runtime <file>`.
+- `nool evidence plan|knot|merge <id>`.
+- `nool evidence export <id> [--format <fmt>]`: export an evidence object.
+- `nool evidence attach-runtime --knot <id> --file <evidence.json>`: attach signed runtime evidence to a knot.
 
 ### `nool attest`
 Record or inspect verification attestations — signed verdicts (tests, scans, reviews) about a knot. An attestation is exported ref-only: it is never a commit on the branch, and travels on this writer's `refs/nool/detached/<writer>` chain.
@@ -361,7 +435,11 @@ Impact-scoped test selection, for CI.
 
 ### `nool audit`
 Produce a compliance report.
-- `report`, `export` (with framework validation), `steering`.
+- `nool audit report`, `nool audit export --output <f> [--frameworks <ids>] [--format json|yaml] [--source git|ledger] [--unsigned]`: the signed `nool audit verify` document for the whole history; a missing signing key is an error without `--unsigned`.
+- `nool audit verify --document <f> [--source git] [--anchor <key>]`: check a document produced elsewhere (signature, signer trusted by a landed issuer or reviewer key, range recomputes to the same answer). Exit 2 forged or not reproduced, 1 unsigned or untrusted signer.
+- `nool audit verify [--from <knot>] [--to <knot>] [--since <t>] [--framework <f>] [--json] [--output <file>] [--sign-as <role>]`: verify compliance controls over a range of knots from git history alone (a fresh clone reproduces the verdict). Exit 0 every scored control passed, 1 inconclusive, 2 failed.
+- `nool audit packs [--framework <f>] [--json]`: framework packs, their controls, and what in this repository claims each.
+- `nool audit steering [--json]`: role-based steering quality audit.
 
 ---
 
@@ -395,6 +473,7 @@ Serialize non-canonical views of the semantic architecture model.
 ### `nool usage`
 Show token usage, budgets, and thread costs. With no subcommand, prints per-provider/per-model token consumption.
 - `nool usage usage | budget-set | budget-status | analytics | agent | thread | dashboard`.
+- `nool usage bounce [--hours <n>] [--json]`: bounces: compressed context an agent then re-read in full (context that cost more than it saved).
 
 ### `nool insights`
 Show project insights, blast radius stats, and time-saved metrics.
@@ -418,8 +497,9 @@ Inspect declarative agent specs.
 
 ### `nool fleet`
 Plan and run fleets of sovereign agents over a goal.
-- `nool fleet plan --task id=paths [--width <n>|auto] [--run <builder.yaml>] [--isolation shared|worktree]`: preview the NodeID-disjoint parallel wave partition (no spend). `--width` caps concurrency per wave: an integer, or `auto` to take the minimum of usable cores (minus `[fleet] reserved_cpus`), available memory over `memory_per_agent_mb`, and the remaining `budget_usd_per_day` over the builder's `per_run_usd`; the printed `Ceiling:` line and the `--json` `width_decision` name which one bound it. Defaults to `[fleet] width`, else `auto` (bounded by `[fleet] max_width`, 16). `--run` executes it, giving each task its own try branch, agent id, and lease. `--isolation worktree` gives each task its own `.nool/try/<run>-<task>/` checkout instead of the shared tree; `--overlap parallel` (worktree only) runs overlapping tasks at once and orders their promotes with `--after`.
+- `nool fleet plan --task 'id=paths[: description]' [--width <n>|auto] [--run <builder.yaml>] [--isolation shared|worktree]`: preview the NodeID-disjoint parallel wave partition (no spend). Under `--run` the description (after the first `: `, as `--fleet-task` reads it) is that task's builder instruction; without one the builder gets only the id. Every isolated builder is told how its work lands (`nool propose` in its checkout, or the `nool.propose` tool); a branch with nothing to land is reported `nothing-to-land` and is not ok. `--width` caps concurrency per wave: an integer, or `auto` to take the minimum of usable cores (minus `[fleet] reserved_cpus`), available memory over `memory_per_agent_mb`, and the remaining `budget_usd_per_day` over the builder's `per_run_usd`; the printed `Ceiling:` line and the `--json` `width_decision` name which one bound it. Defaults to `[fleet] width`, else `auto` (bounded by `[fleet] max_width`, 16). `--run` executes it, giving each task its own try branch, agent id, and lease. `--isolation worktree` gives each task its own `.nool/try/<run>-<task>/` checkout instead of the shared tree; `--overlap parallel` (worktree only) runs overlapping tasks at once and orders their promotes with `--after`.
 - `nool fleet capacity [--width <n>|auto] [--builder <spec>] [--json]`: report the wave-concurrency ceiling for this machine and budget without planning anything — each probe's width (CPU, memory, budget), which one binds, and the `[fleet]` settings that produced it. `--builder` supplies the `budget.per_run_usd` that lets the daily allowance bind.
+- `nool fleet code --goal "<goal>" [--task <spec>]... [--builder <b.yaml>] [--reviewer <r.yaml>]... [--width <n>] [--max-iterations <n>] [--json]`: the `nool code --fleet` engine driven by agent YAML specs (model and budget presets): a coordinator plans the goal (or `--task` gives the tasks), each task runs as a child session on its own worktree, reviewers judge each verified child, children land in dependency order and one integrated check decides. For local + cloud sandbox pools use `nool code --fleet --pool …` (§19, and `docs/FLEET_POOLS.md`).
 - `nool fleet advise`: recommend Single / ParallelIndependent / CentralizedQuorum architecture from measurable task signals, before spending.
 - `nool fleet ps`: the `nool code` fleets running in this repository, with their task counts.
 - `nool fleet status [<fleet>] [--json]`: a fleet's pools (capacity, load, draining, how children reach the model), routes and tasks (phase, pool, sandbox, spend and gateway spend, why it stopped). A running fleet is read live; an ended one from `.nool/code/<fleet>/fleet.ndjson`.
@@ -472,6 +552,7 @@ Coordinate a polyglot workspace of nested Nool projects (Org→Dept→Team→Pro
 - `nool workspace goal [--decompose <target>=<task>]`: build a goal (fan-out or absorb).
 - `nool workspace goals | goal-status`: list goals / per-project completion.
 - `nool workspace insights | telemetry`: roll up insights / cost across children.
+- `nool workspace search "<query>" [--limit <n>] [--fuzzy] [--json]`: search every project's own index, results grouped by project.
 - `nool workspace visualize`: visualize the Org→Dept→Team→Project tree.
 - `nool workspace pull | sync`: propagate DAG changes across children in dependency order.
 - `nool workspace console`: roll-up web console (port 4002).
@@ -499,18 +580,29 @@ Install or uninstall the active coding-agent guard: git history-verb blocking pl
 - `nool hooks mcp --agent <claude|cursor|gemini|windsurf|opencode> [--global] [--remove]`: register Nool's MCP server (`nool-mcp --stdio`) in that agent's MCP config, the project's or with `--global` the user's (which also installs this skill where the agent reads skills). A config it cannot parse is refused, never overwritten.
 
 ### `nool commit-template`
-Validate and preview the effective enterprise commit-message template.
+Validate and preview the effective enterprise commit-message template (Enterprise).
+- `nool commit-template check [--project <p>] [--json]`: validate the effective template without creating a proposal or commit.
+- `nool commit-template render [--subject …] [--type …] [--scope …] [--issue …] [--intent …] [--json]`: render a safe preview with synthetic Nool metadata.
+- `nool commit-template validate --commit <sha> | --range <a..b> | --message-file <f>`: validate existing commits or a message file, for CI and hooks.
+- `nool commit-template install-hook [--force]`: install an optional local `commit-msg` hook that runs the validation.
 
 ### `nool admin`
 Manage account settings, plugins, and billing.
-- `account`, `plugin`, `pack` (verify/install governance packs), `gc`, `channel`, `team`, `train-dict`, `reconcile`, `reindex-graph`, `contract`.
+- `nool admin account …`: licence and subscription. `activate <key>`, `trial`, `subscribe [--tier]` (open the portal), `sync --email <e>` (fetch your key from the hub with a one-time email code), `devices [--json]` (machines holding this licence's device slots), `deactivate <device-id>` (free a slot). `nool admin account billing manage|portal|status|usage|restore <email>|create|list|get|update|cancel` manages the hub subscription. Hub operators only: `issue-license --email <e> [--plan|--seats|--days …]`, `revoke-license --email <e>|--license-id <id> [--all]`, `list-licenses`.
+- `nool admin export --out <dir>`: write the hub org-replica export of this checkout's ledger (knot bytes and headers, heads, derived rows, removal records, versioned manifest); re-running at the same revision rewrites nothing.
+- `nool admin plugin init --plugin-type <policy|language> <name>` (scaffold a crate), `build [path] [--out <f>]` (compile to the WASM/component Nool loads), `install`, `list`, `uninstall <name> [--policy] [--force] [--no-land]`, `land` (land the policy set as it stands in the working tree; until landed only this checkout enforces it), `pin`.
+- `nool admin pack verify <path>` / `install <path> [--force]` / `list` / `uninstall <name> <version> [--force]` (Enterprise): governance packs (semver'd bundles of policies, invariants, steer points, agents and playbooks), activated through the same signed, dependency-checked path as `admin plugin install`.
+- `nool admin contract grant --role <role> [--scope <glob>] [--to <key>] [--expiry-days <n>]` (Enterprise): a signed agent-collaboration contract the Aram gate requires before an Editor/Planner mutation solidifies; without `--to` it grants this machine's own key.
+- `nool admin team invite <email>`: invite a teammate onto your Team subscription (refused once every seat is taken).
+- `nool admin channel create --name <name>` / `nool admin channel list`: notification channels.
+- `nool admin gc [--force]`: resource cleanup. `nool admin reconcile [--batch-size <n>]`: process the self-healing repair queue. `nool admin reindex-graph`: rebuild the entity dependency graph from the working tree. `nool admin train-dict`: deprecated no-op.
 - `nool admin team add --id <key> [--role <role>] [--scope <glob>]... [--expiry-days <n>]`: grant a key a role (`admin`, `approver`, `editor`, `planner`, `reviewer`, `coordinator`, `releaser`, `auditor`, `steer:<role>`). Enforced where the issuer is trusted (`[governance] issuer_keys`, a licence's organisation keys, or a workspace's `[workspace.governance]`). At a workspace root the one grant lands in every repository beneath it.
 - `nool admin team list`: every grant and whether it stands; at a workspace root, per repository. `nool admin team key`: this machine's public key.
 - `nool admin revoke <grant-id | key> [--reason <text>]`: end a grant, or every grant of a key.
 - `nool admin plugin pin`: pin the policy set in `[aram] policies`; land `nool.toml` afterwards.
 
 ### `nool login [--hub <url>]`
-Sign in at the organisation's identity provider (device flow) and land the grants its control plane issues for this machine's key. `nool propose` renews them before they run out.
+Sign in at the organisation's identity provider (device flow) and land the grants its control plane issues for this machine's key. It also binds the key to your login at the hub, which the hub's approval routes require for every decision. `nool propose` renews the grants before they run out.
 
 ### `nool audit`
 Produce a compliance report (see §11).
@@ -580,11 +672,22 @@ Show the quick-start guide.
 ### `nool guide`
 Show the detailed guide and examples (e.g. `nool guide multi-agent`, `nool guide governance`).
 
+### `nool session`
+Nool-owned agent sessions: one live run of an agent in a harness. With `$NOOL_SESSION_ID` set, the session becomes the caller's coordination identity (`session:<id>`), so two agent sessions on one machine fence each other's leases even though they share the operator keypair. `$NOOL_AGENT_ID` still takes precedence.
+- `nool session start --harness <claude-code|codex|gemini|shell> [--harness-session <id>] [--export] [--json]` — mint the session, or recover it: the same harness session id always maps to the same Nool session, so a resumed session keeps its leases. `eval "$(nool session start --harness codex --export)"` sets it for a shell.
+- `nool session show [--json]` — the session this shell runs in.
+- `nool session list [--json]` — sessions recorded on this machine (`~/.nool/sessions/`), most recent first.
+
+Claude Code needs no setup: the SessionStart hook installed by `nool hooks install` exports the session through `$CLAUDE_ENV_FILE`, and every Edit/Write renews that session's live leases on the edited file.
+
 ### `nool telemetry`
 Show or change whether Nool sends anonymous usage analytics (which commands run, coarse error categories, timing). Enabled by default. Separate and unrelated to `nool usage analytics`, which is LLM token-cost analytics.
+- `nool telemetry status` / `enable` / `disable`.
+- `nool telemetry show`: print the exact JSON payload(s) that would be sent, before deciding whether to opt out.
 
 ### `nool feedback`
 Rate Nool or give quick feedback, in response to the occasional non-blocking prompt shown after using it for a while.
+- `nool feedback rate <1-5>`: rate Nool from 1 (not great) to 5 (love it).
 
 ### `nool version`
 Print version information.
@@ -599,9 +702,17 @@ Uninstall the Nool CLI and remove local identity keys.
 
 ### `nool code [GOAL]`
 Run a goal as a coding session on this repository (7.9.0, Community). The model works in a `nool try` worktree under its own lease, and the session ends `Verified` only when Nool's completion check passes: a full-mode checkpoint, the affected tests run in a write/network jail, the task's acceptance criteria, and try-impact readiness. Sessions can never write `.nool/` or `.git`; raw git history verbs and state-changing `nool` verbs are refused.
-- `--exec`: headless one-shot, full-auto unless `--mode` says otherwise. Exit codes: 0 verified, 2 blocked, 3 lease conflict, 1 paused or failed.
-- `--mode suggest|auto-edit|full-auto`, `--budget <usd>`, `--max-rounds <n>`, `--profile full|bare`, `--task <id>` (its acceptance criteria join the check, and it is finished with the landed knot), `--playbook <name>` (start from a `[code.playbooks.<name>]` plan template, 7.13.1), `--json` (one event envelope per line), `--list` (this repo's sessions), `--serve` (the per-repo session API).
+- `--exec`: headless one-shot, full-auto unless `--mode` says otherwise. Exit codes: 0 verified, 2 blocked, 3 lease conflict or a landing awaiting another person's approval (`paused: awaiting approval <request>`; resume the session once it is approved and it lands), 1 paused or failed.
+- `--share-live`: while a landing waits on an approval, approvers can watch and steer the session through the hub. `--review <request>`: open the TUI on the author's shared session as an approver (watch, steer, `/approve`, `/reject`, `/comment`); needs the hub and `nool login`.
+- `--mode suggest|auto-edit|full-auto`, `--budget <usd>`, `--max-rounds <n>`, `--profile full|bare`, `--task <id>` (its acceptance criteria join the check, and it is finished with the landed knot), `--playbook <name>` (start from a `[code.playbooks.<name>]` plan template, 7.13.1), `--no-user-instructions` (the repository's instruction files only: no `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md`, `~/.gemini/GEMINI.md`, `~/.nool/AGENTS.md` or Claude Code memory index, here and in the session's fleet children; `[code] user_instructions = false` makes that the default), `--json` (one event envelope per line), `--list` (this repo's sessions), `--serve` (the per-repo session API).
 - `--model <provider:model>` (e.g. `mistral:devstral-latest`, `anthropic:claude-sonnet-5`) or a model on the backend (`anthropic/claude-sonnet-5` is an OpenRouter id); `--backend openrouter|ollama|cloudflare|mistral|bedrock|anthropic|openai|google|azure|xai`. Defaults come from `nool code model set`, else `[code]` in config.
+
+### `nool code --fleet`: local + isolated sandbox pools
+Run the goal as a fleet (Team): a coordinator plans it into tasks that run as child sessions, land in dependency order and pass one integrated check. Full guide with diagrams: `docs/FLEET_POOLS.md`.
+- `--pool <kind[:N][,name=<n>][,model=tunnel|hub|url:<url>]>` (repeatable, placement order): `local[:N]` (this machine, try worktrees, shell jail; `N` defaults to the measured width), `local-process[:N]` (the remote protocol on this machine), `daytona[:N]` (`DAYTONA_API_KEY`), `modal[:N]` (the `modal` package; gVisor is the boundary). Cloud pools need `NOOL_SANDBOX_BUILD` (an `x86_64-unknown-linux-musl` release archive) and default to 4 slots. The fleet is as wide as its pools together, capped by `[fleet] provider_requests_per_minute`/`provider_tokens_per_minute`.
+- `--route <task-or-glob>=<pool>` (repeatable): pin tasks to a pool by id or scope glob (`'crates/**=big'`); a routed task waits for its pool rather than spilling. Unrouted tasks take the first pool, in `--pool` order, with a free slot.
+- `--fleet-task 'id=path[,path…][@dep,…][: description]'`, `--reviewer <model>` (`!model` can veto), `--width <n>` (local slots), `--max-iterations <n>`, `--into <branch> [--base <b>]`.
+- Operate it live with `nool fleet ps|status|ctl` (§14) or `/fleet …` in the TUI.
 
 ### `nool code` recovery, context, leases, playbooks and steering (7.13.1)
 - **Retries.** A model call that fails with a rate limit, an overload, a 5xx or a timeout before any tool call arrived is re-sent after 2 s, 4 s, 8 s (at most 30 s), up to `[code] retry_attempts` times (default 3; 0 turns it off). An interrupt cuts the wait short. A context-length error compacts the transcript once and re-sends. A rejected key, an unknown model or exhausted retries pause the session and say which.
@@ -689,8 +800,21 @@ Notifications when a session's work is done (7.10.0), configured in `~/.nool/cod
 - `nool code doctor [--all]`: every MCP server, instruction file, skill, hook, slash command and plugin a session imports, where each comes from, and what was skipped and why. `--all` also starts stdio MCP servers to list what they offer.
 - `nool code trust [--revoke]`: trust this repository so its project-level MCP servers, hooks and plugins load (they run commands): `nool.toml` `[code.hooks]` and `[tools.mcp]`, `.claude/settings*.json` hooks, `.mcp.json` and friends, `.nool/plugins`, `.nool/tools`. Editing any of them voids the trust until given again.
 - `nool code mcp list|add|remove|login|logout`: the MCP catalog and your servers in `~/.nool/code.toml`; `add <name>` from the catalog or `add <name> -- <command> [args...]`; `login` signs in to an OAuth HTTP server and stores tokens in the OS credential store.
-- `nool code plugin list|add <source>|remove <name>`: Claude Code-format plugins in `~/.nool/plugins`, installed from a directory, a git URL, or a plugin already installed in Claude Code.
+- `nool code plugin list|add <source>|remove <name>`: Claude Code-format plugins in `~/.nool/plugins`, installed from a directory, a git URL, or a plugin already installed in Claude Code. `nool code plugin info <name>` (manifest and bundled commands, skills, agents, hooks, MCP servers), `enable|disable <name> [--repo]`, `update [<name>]` (fetch again and say what changed), `validate <target>`.
+- `nool code marketplace list | add <owner/repo|git-url|path> [--name] | browse <name> | update [<name>] | remove <name>`: plugin marketplaces, Claude Code's (read in place, never written) and your own (cloned under `~/.nool/marketplaces/`). Nothing is installed or enabled by default.
+
+### `nool code skill` / `hooks` / `agent`
+Claude Code-format skills, hooks and agent definitions, managed for `nool code` sessions. `--repo` targets the repository (`.nool/…`, `nool.toml`) instead of `~/.nool`.
+- `nool code skill list | show <name> [--history] | add <dir|SKILL.md|name> [--repo] [--name] [--force] | remove <name> | enable|disable <name> [--repo] | new <name> [--repo] [--description] | validate [<name>|<path>]`.
+- `nool code skill propose --from-session <session> [--name <n>] [--force]`: draft a private skill from a session that worked (its successful commands become the steps, its goal the trigger, its checks the validation section). `nool code skill share <name>` stages it into `.nool/skills` as a `nool propose` candidate for review (not solidified). `nool code skill record <name>` records a hand-edited skill as a new version.
+- `nool code hooks list | show <id> | add <event> <command> [--matcher <m>] [--timeout <s>] [--async] [--repo] | remove <id> | enable|disable <id> [--repo] | test <event> [--tool <t>] [--input <json>] | events`: hooks in `~/.nool/hooks.json` (or `.nool/hooks.json`, loaded once the repo is trusted); Claude Code's own files are never written. `test` runs an event's hooks on a sample payload; `events` lists what nool code fires and what a block means.
+- `nool code agent list | show <name> | validate [<name>|<path>]`: agent definitions a session runs as read-only helpers (`list` names tools a helper cannot have).
+
+### `nool code permissions` / `policy` / `tools`
+- `nool code permissions list | add <allow|ask|deny> <rule> [--repo] | remove <rule>`: tool rules (`edit`, `mcp__github__*`) and shell rules (`cargo test` = prefix, `=rm -rf target` = exact). An untrusted repository's `allow` rules never apply.
+- `nool code policy scan [--children] | suggestions | show <id> | accept <id> | reject <id> | snooze <id>`: cluster recurring failures from session logs into governance suggestions; `accept` lands the check or policy, `reject` stops the class being proposed, `snooze` hides it for 30 days.
+- `nool code tools list | install <name> | remove <name> | prune [--days <n>]`: the OCR/PDF tool cache. Only `ocrs` is installed by nool; system tools (tesseract, poppler, mupdf) are explained, never installed through a package manager.
 
 ---
 
-*Last updated: October 12, 2026 for Nool v7.18.0*
+*Last updated: October 17, 2026 for Nool v7.21.0*

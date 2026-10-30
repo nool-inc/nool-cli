@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Document the 7.23.0 release in the distribution repo: CHANGELOG entry and current-version stamps
-knot_id: 8c377f686cf8a4e874f950606ccab05534b85ec0cea74ad6154cf2cedabeba74
-solidified_at: 1793331378312
-thread: main
+intent: Release: 7.23.0
+knot_id: 7d670bda760365b5b3afb9f06e7c703e34606dabd0099a75da53e496622ea51c
+solidified_at: 1793331378785
+thread: 

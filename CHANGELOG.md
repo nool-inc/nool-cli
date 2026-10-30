@@ -4,6 +4,70 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.23.0] - 2026-10-30
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.23.0
+
+### Added
+- **Enterprise guarantees for `nool code`**. One policy now reaches every worker, agent or human, at every step:
+  - **`pre-tool` policy stage.** An agent's edit or shell command is checked before it runs against `[rules] forbidden_paths` and every Aram DSL rule that lists `stages = ["pre-tool"]`. A blocking rule denies the call, a warning rule lets it run with a notice, and both are recorded in the session's `pre_tool.jsonl`. A policy that cannot be read denies (fail closed). Rules without `stages` never run here; the seal still checks everything. The policy ABI gains the `pre-tool` stage.
+  - **`[code.completion]`: the completion check as configuration.** `red_green`, `oracle` and `mutation` take `required` (a failure, including "no test written" or an inconclusive result, fails the check), `advisory` or `off`. `[[code.completion.steps]]` adds command steps after `tests`, `criteria` or `ready`, and review steps with a `lens` added to the reviewer's brief. Unset, nothing changes. The check report names the policy it ran under.
+  - **Organisation floor: `[workspace.policy]`.** A `workspace.toml` above the repositories declares `forbidden_paths` and a `completion` floor. Every repository beneath works under it and can tighten it, never weaken it: the floor applies at the seal, at `pre-tool` and in every `nool code` session. A `nool.toml` that asks for less is refused at propose, and `nool doctor` reports `ORG_POLICY_WEAKENED` and `ORG_POLICY`. A malformed floor is reported and never drops the file's `[workspace.governance]` anchor.
+  - **Review.** `[code] review = "always"` runs the independent goal review in interactive sessions too. `[code] review_rubric = "REVIEW.md"` gives the reviewer the repository's own rules, read from the main checkout (never the session's branch), with its digest recorded; an unreadable rubric fails the review. A reviewer can mark a defect the change did not introduce as `PREEXISTING:`; it is recorded and never blocks.
+  - **Evidence.** A fleet's reviewer verdicts are attested as `fleet-review` on the knot each task landed. A failed attestation is reported in the fleet's result instead of being dropped. A diff cut for the reviewers names the files it hides. A task-lifecycle refusal at QA fails the completion check when the repository declares `[tasks.lifecycle]`.
+- **Signed revocation ledger**. `nool revocation record|status|export` keeps append-only, hash-chained compromise and operational revocations. Offline bundle verification reports `revoked_at_admission` and `revoked_at_publication` and quarantines revoked publications.
+- **Publication gate**. A pre-receive receiver verifies the evidence bundle for the exact incoming Git object: a signed publication receipt, its object id and policy digest. It refuses quarantined admissions, and a short-lived signed break-glass covers one exact ref update. The hub replica checks its mirror refs and prunes the mirror namespace before trusting it.
+- **Content-addressed policy bundles**. An immutable digest store with signed ID-to-digest references. `[policy_bundle]` is resolved before evaluation and fails closed. Gate receipts record the policy-set digest, and `nool audit verify` checks it.
+- **AGT/ACS interop**. `nool evidence knot <id> --format acs` exports schema-validated ACS v0.1.0 context entries. `[gating] acs_manifest` runs a forbid-only Cedar seal policy whose manifest hash and verdict go into the gate receipt; a `permit` clause is refused rather than run.
+- Aram also hosts Rego and Cedar policies.
+- Evidence-gated ingest with an opt-in serving closure.
+- Offline DSSE/in-toto/SLSA evidence-bundle verification.
+- Desktop application control for `nool code` agents.
+- Hub org search, rollups and partitioned pulls; GitHub App and Secrets Manager remote credentials.
+- **Land on a branch instead of main**. `nool try promote --onto <git-branch>` seals as today and puts the commit on a side branch, leaving the checkout alone; `nool status` lists knots awaiting merge. `nool push <remote> --branch <name>` pushes that branch and its mirror pointer together. In `nool code`, `[code] land_target = "branch"` and `[code.pr]` (base, branch prefix, `open = gh|url|none`, draft) land each session on its own branch and open the PR, with an evidence bundle written even when the branch cannot be pushed; `nool why` names it.
+- **Per-gate metrics**. Propose and solidify record every gate's verdict against a landing attempt. `nool policy stats [--since] [--gate] [--json]` shows how often each gate blocks and how many changes pass it on the first run; `nool doctor` warns `GATE_FIRST_RUN_LOW`, and `nool insights` and the hub org rollup carry the per-gate counters.
+- **Destination-scoped authority**. `[publication] destination`, `allowed_destinations` and `required_policy_set`; a destination grant signs a list of destinations, and gate receipts bind the destination in their signed payload. Older receipts never satisfy a destination-required check.
+- **`nool code` customization for enterprises.** A repository ships its TUI in `nool.toml` `[code.tui]` (theme, keys, sidebar, header, footer, tabs), with the user's `~/.nool/code.toml` layered on top; command and URL tabs load only from a trusted repository. `nool code doctor` gains a Customization section.
+- **`nool code` UML screen** (`[5 UML]`, Alt+5, `/uml`): the harness as connected blocks or the session as a sequence diagram, exported as Mermaid; the side panel shows the budget runway.
+- `nool code`: language-server diagnostics (errors only) follow every write, edit and patch; later review rounds see only the diff since the last reviewed commit; each DENY is confirmed by a read-only checker; checks already red on the base count as pre-existing only when they fail the same way; sessions carry a landing packet; the plan offers a fleet when the declared paths are independent; time to first token, cache share and prompt-cache prefix breaks are reported.
+- `nool propose` judges the change before the ghost run, so a blocking DENY returns in seconds instead of after the build.
+- Progress counters for long commands: `nool init`/import history, `nool bridge reindex` and `nool push`'s gate check show done/total on stderr (silent under `--quiet` and `--json`).
+- `nool workspace status --hub [--org] [--path]`; `workspace goals --json`, `workspace doctor --json`, `debug replay --json` and `debug step --json` emit JSON.
+- `nool status`, `nool insights` and the ROI dashboard count semantic merges Nool resolved (knots with more than one parent) instead of an estimated dev-hours figure.
+
+### Changed
+- `nool doctor` reports a build check killed at its timeout as `BUILD_INTEGRITY_NOT_CHECKED` (a warning), not "does not build".
+- `discover bootstrap` and entity resolution no longer propose equivalences the graph already refutes, and never cluster removed rows or bodiless symbols. `admin reindex-graph` retires rows no file on disk owns any more.
+- Try-branch candidate notices (`TRY_BRANCH_CANDIDATES`, `TRY_BRANCH_CANDIDATE_STALE`) are informational.
+- `[replay] declared_lost_roots` lets a repository declare ancestors no replica holds any more.
+- **Configuration changes land alone.** A knot that changes `nool.toml` or `workspace.toml` changes nothing else and carries a typed `--justification`, or propose and solidify refuse it with `CONFIG_CHANGE`; a policy pin may land with the policy files it names. `nool code` may now edit `nool.toml`, `.noolignore`, `workspace.toml` and `.gitignore`, still refused when the edit would turn off reification or AST analysis.
+- Gates fail in one direction: a policy that could not run is recorded Unverifiable, never a pass; a council member whose run errored never counts as an approval; `nool doctor --strict` fails with `POLICY_UNVERIFIED` when a knot landed while a policy could not run.
+- `task batch-transition` accepts 8+ character short knot ids for `finish` and `verify_done.landed_knot`.
+- Ingest and reindex mark commits a remote already holds as pushed, so push no longer re-gates replicated history.
+- The pre-push `sensitive_path` steering point is removed.
+
+### Fixed
+- **GitHub's merge buttons on a Nool side branch**. A squash or rebase merge of a `nool try promote --onto` branch left every landing "Awaiting merge" forever, a fresh replica needed two pulls to receive the squashed branch's earlier knots, and the merge-commit button produced a commit classified foreign that `nool bridge adopt` then refused ("nothing to adopt"). `nool pull` now derives which landings the new main commits merged from the knot each commit carries, its `Nool-Knot-ID` trailers and the landing branch's ancestry, records the main commit on each `knot_landing` row (`merged_commit_oid`), re-points the carried knot's mirror commit, fetches every branch's mirror pointer before ingest, and no longer classifies a commit that introduces no content outside `.nool/` beyond its parents' trees as foreign. A carrier commit whose changes go beyond its knot's landing commit is reported by path.
+- Seal and propose latency no longer grows with the number of knots in the ledger.
+- Findings replicate to clones on push.
+- `pluck` blocks Done tasks pinned to inactive knots.
+- Replay no longer skips post-commit solidify records.
+- Replay re-validates the lifecycle phase mapping and guards, and WASM lifecycle guards get real facts.
+- `requires_role` resolves from the signer's identity.
+- Legacy dictionary-compressed knot carriers decode during recovery and pull.
+- A fleet only lands a branch that touches its task's scope, and fleet width is bounded by free disk.
+- Hook output collection honours its timeout.
+- Tab scrolling counts terminal cells.
+- The commit template renders the intent as data.
+- Task states no longer go back to InProgress after a stale candidate is sealed. A candidate queued hours earlier kept its old HLC when sealed onto newer heads, and the task projection then replayed a task's Finish before its Start. Replay now orders task knots parent-first by lowest HLC, and a sealed candidate is stamped no older than its parents.
+- A commit subject keeps an intent's leading Rust path: `nool_storage::f: …` was read as a conventional-commit type and left the subject as `:f: …`.
+- Concurrent events on one bug are no longer a replay conflict.
+- `nool doctor --json` (and every command that runs a build check) keeps its stdout to its own output: the build-check timeout line goes to stderr, so JSON readers no longer fail on it.
+
+### Upgrade note
+- Knots carrying the `pre-tool` lifecycle stage and the new revocation and receipt data need 7.23.0 or later to read.
+- `[workspace.policy]` was a retired, ignored section; it is read again as the organisation floor. Its old `claim_ttl_ms` and `gates` keys are still ignored and reported.
+
 ## [7.17.0] - 2026-10-07
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.17.0

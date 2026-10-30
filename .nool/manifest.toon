@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Re-sync downstream skill copies from authored skills/nool-commands (fix bug 473e10a7)
-knot_id: 933eac7ad0180dde2962742b6e1e498f3a738d1b963c690651cf7c0badc62e6e
-solidified_at: 1792764060394
+intent: Document the 7.23.0 release in the distribution repo: CHANGELOG entry and current-version stamps
+knot_id: 8c377f686cf8a4e874f950606ccab05534b85ec0cea74ad6154cf2cedabeba74
+solidified_at: 1793331378312
 thread: main

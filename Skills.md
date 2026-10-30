@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.21.0
+**Version**: 7.23.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -117,6 +117,8 @@ Generate a candidate Knot.
 - `--interactive`: guided mode for beginners.
 - `--detailed`: show all affected nodes in blast-radius warnings.
 
+- A change to `nool.toml` or `workspace.toml` lands on its own and with a typed reason: `nool propose --path nool.toml --kind config --justification "<why>" --solidify`. Bundled with any other file, or with no `--justification` (an `--auto-justify` text or a reused one does not count), propose and solidify refuse it (`CONFIG_CHANGE`, exit 2). The one exception is a policy pin: `nool.toml` whose only change is `[aram] policies`, landed with the files under `policies_path` it names.
+
 Shortcut: `nool propose --path <file>… --intent "..." --solidify`. Name the files you changed: `--all` sweeps every dirty file, including other agents' work in a shared tree, so keep it for a `nool try` worktree. Propose only code that builds.
 
 ### `nool land wait <id>`
@@ -193,7 +195,7 @@ Approval requests (team approval).
 Push all unsent changes to a remote (URL or name).
 
 ### `nool pull <remote>`
-Pull changes from a remote and apply them locally. `--branch <b>` merges that branch of the remote (a name, URL or git bundle) into the checked-out branch instead, as `nool pr merge` does.
+Pull changes from a remote and apply them locally. `--branch <b>` merges that branch of the remote (a name, URL or git bundle) into the checked-out branch instead, as `nool pr merge` does. A side branch GitHub merged with any button (squash, rebase, merge commit) is reconciled here: the knots the new commits carry are found, their landings recorded as merged on main, and nothing is re-landed.
 
 ### `nool sync <remote>`
 Synchronize with a remote in both directions.
@@ -237,6 +239,14 @@ Release-readiness and repository health checks.
 - `--fix --heads-only`: only consolidate fragmented DAG heads into one merge knot, skipping the prune of replay-rejected knots. Use this when the rejected set is large enough that a blanket prune would delete real, still-referenced history (e.g. active tasks).
 
 - `--traceability [--since <n>d|h|m|s] [--strict] [--json]` — governance report over the landed work knots in the window: each one's intent, test note, gate verdict and trusted attestations. Exit 2 with `--strict` when any knot lacks an intent or test note or carries a failed attestation. Streams the ledger from the window start, so it is cheap on large repositories.
+
+- A gate that passed fewer than half of the changes it first ran on (at least 10, over 30 days) is a `GATE_FIRST_RUN_LOW` warning; see `nool policy stats`.
+
+### `nool policy stats`
+How often each gate blocked a change, and how often a change passed it the first time it ran. Gates are every Aram policy (`policy:<id>`) and each built-in gate (`precheck`, `integrity`, `lint:<name>`, `blast`, `judgment`, `budget`, `lease`, ...).
+- A *landing* is one agent's attempts at one change: proposes on overlapping paths until it seals or goes quiet for 24 hours. A gate's *first run* is the earliest time it evaluated the landing.
+- `--since <30m|12h|7d>` (default `30d`), `--gate <name>` or a prefix such as `policy:*`, `--json`.
+- The same numbers are under `gates` in `nool insights` and at `/api/gates` in `nool console`, and the hub org rollup sums `gate.<id>.blocks|landings|first_run_passes` across repositories.
 
 ### `nool verify`
 Run structural invariants against the current or planned state.
@@ -437,7 +447,7 @@ Impact-scoped test selection, for CI.
 Produce a compliance report.
 - `nool audit report`, `nool audit export --output <f> [--frameworks <ids>] [--format json|yaml] [--source git|ledger] [--unsigned]`: the signed `nool audit verify` document for the whole history; a missing signing key is an error without `--unsigned`.
 - `nool audit verify --document <f> [--source git] [--anchor <key>]`: check a document produced elsewhere (signature, signer trusted by a landed issuer or reviewer key, range recomputes to the same answer). Exit 2 forged or not reproduced, 1 unsigned or untrusted signer.
-- `nool audit verify [--from <knot>] [--to <knot>] [--since <t>] [--framework <f>] [--json] [--output <file>] [--sign-as <role>]`: verify compliance controls over a range of knots from git history alone (a fresh clone reproduces the verdict). Exit 0 every scored control passed, 1 inconclusive, 2 failed.
+- `nool audit verify [--from <knot>] [--to <knot>] [--since <t>] [--framework <f>] [--json] [--output <file>] [--sign-as <role>] [--destination <destination>]`: verify compliance controls over a range of knots from git history alone (a fresh clone reproduces the verdict). `--destination` (default: the landed `[publication].destination`) reports a receipt bound to another destination, or to none, as `destination_replay`. Exit 0 every scored control passed, 1 inconclusive, 2 failed.
 - `nool audit packs [--framework <f>] [--json]`: framework packs, their controls, and what in this repository claims each.
 - `nool audit steering [--json]`: role-based steering quality audit.
 
@@ -596,7 +606,7 @@ Manage account settings, plugins, and billing.
 - `nool admin team invite <email>`: invite a teammate onto your Team subscription (refused once every seat is taken).
 - `nool admin channel create --name <name>` / `nool admin channel list`: notification channels.
 - `nool admin gc [--force]`: resource cleanup. `nool admin reconcile [--batch-size <n>]`: process the self-healing repair queue. `nool admin reindex-graph`: rebuild the entity dependency graph from the working tree. `nool admin train-dict`: deprecated no-op.
-- `nool admin team add --id <key> [--role <role>] [--scope <glob>]... [--expiry-days <n>]`: grant a key a role (`admin`, `approver`, `editor`, `planner`, `reviewer`, `coordinator`, `releaser`, `auditor`, `steer:<role>`). Enforced where the issuer is trusted (`[governance] issuer_keys`, a licence's organisation keys, or a workspace's `[workspace.governance]`). At a workspace root the one grant lands in every repository beneath it.
+- `nool admin team add --id <key> [--role <role>] [--scope <glob>]... [--destination <destination>]... [--expiry-days <n>]`: grant a key a role (`admin`, `approver`, `editor`, `planner`, `reviewer`, `coordinator`, `releaser`, `auditor`, `steer:<role>`). `--destination https|ssh://host/owner/repo#refs/...` makes it a destination-scoped grant: under `[publication].destination` a non-admin needs one naming that destination to land changes. Enforced where the issuer is trusted (`[governance] issuer_keys`, a licence's organisation keys, or a workspace's `[workspace.governance]`). At a workspace root the one grant lands in every repository beneath it.
 - `nool admin team list`: every grant and whether it stands; at a workspace root, per repository. `nool admin team key`: this machine's public key.
 - `nool admin revoke <grant-id | key> [--reason <text>]`: end a grant, or every grant of a key.
 - `nool admin plugin pin`: pin the policy set in `[aram] policies`; land `nool.toml` afterwards.
@@ -817,4 +827,4 @@ Claude Code-format skills, hooks and agent definitions, managed for `nool code` 
 
 ---
 
-*Last updated: October 17, 2026 for Nool v7.21.0*
+*Last updated: October 30, 2026 for Nool v7.23.0*

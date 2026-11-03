@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.23.0
+**Version**: 7.24.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -114,10 +114,13 @@ Generate a candidate Knot.
 - `--bundle <files>` / `--project-root <root>`: project-level reification for compiled languages.
 - `--binary <skip|raw|lfs>`: how to handle binary files.
 - `--breaking`, `--issue <ref>`, `--test-note <note>`, `--tag <tag>`.
+- `--task <id>`: bind the proposal to a task (repeatable; also `NOOL_BOUND_TASK`). A proposal is always bound to its author's InProgress tasks too; a bound task's rails are enforced at the seal (`TASK_RAILS`, exit 2).
 - `--interactive`: guided mode for beginners.
 - `--detailed`: show all affected nodes in blast-radius warnings.
 
 - A change to `nool.toml` or `workspace.toml` lands on its own and with a typed reason: `nool propose --path nool.toml --kind config --justification "<why>" --solidify`. Bundled with any other file, or with no `--justification` (an `--auto-justify` text or a reused one does not count), propose and solidify refuse it (`CONFIG_CHANGE`, exit 2). The one exception is a policy pin: `nool.toml` whose only change is `[aram] policies`, landed with the files under `policies_path` it names.
+
+- After a passing full-mode run, propose tries up to `[reification] max_mutants` (default 3) one-line mutants of the changed lines within `mutation_budget_secs` (default 300) and the seal records a `tests_constrain_change` attestation: `pass` when every mutant was caught, `fail` naming survivors by file:line and operator, `error` (never a pass) when nothing could be mutated or the budget ran out. `max_mutants = 0` turns it off; `[attestation.obligations]` can require it.
 
 Shortcut: `nool propose --path <file>… --intent "..." --solidify`. Name the files you changed: `--all` sweeps every dirty file, including other agents' work in a shared tree, so keep it for a `nool try` worktree. Propose only code that builds.
 
@@ -177,7 +180,7 @@ Promote a local knot to the next saved state.
 - `-p, --push <remote>`: push to a remote after promotion.
 
 ### `nool approve <request>`
-Record a signed decision (`human-approval` attestation) on an approval request, or on a knot when no request names it. Refused when you authored the change.
+Record a signed decision (`human-approval` attestation) on an approval request, or on a knot when no request names it. Refused when you authored the change, unless `[approval] self_approval = "labelled"` is landed: then it is recorded as a labelled self-approval, shown as `self-approved (labelled)`, and never counted as independent review by `nool audit verify` (`nool doctor` reports `SELF_APPROVAL_ENABLED`).
 - `-c, --comment "<why>"` (required), `-r, --reject`, `--push <remote>` (send the decision on your chain), `--attestation "<statement>"` (needed to approve a high-risk checkpoint), `--id <id>` (the older spelling of the positional).
 
 ### `nool approval`
@@ -285,7 +288,7 @@ Print one symbol's source with line numbers and its doc comment: `nool show src/
 Runtime semantic queries.
 - `nool query context <id> [--depth <n>]`: token-optimized semantic neighborhood for an entity/feature.
 - `nool query resolve-intent "<query>"`: search knots matching a natural-language intent.
-- `nool query search "<text>"`: semantic + fuzzy hybrid search.
+- `nool query search "<text>" [--scope repo|org]`: semantic + fuzzy hybrid search; `--scope org` searches every repository through the hub (exits with the hub's error when it is down). `[hub] search_scope = "org"` makes org the default and falls back to this repository with a warning.
 - `nool query blast-radius <ids>`: compute causal blast radius.
 - `nool query neighbors <id>`: show causal neighbors.
 - `nool query recent-knots [--thread <name>]`: recent knots.
@@ -337,15 +340,17 @@ Rewind workspace state (see §1).
 ## 9. Tasks, Threads & Bugs
 
 ### `nool task`
-Track units of work. Lifecycle: Open → Claimed → InProgress → InReview (QA) → Done.
-- `nool task create --name "<name>" [--acceptance "<criterion>"] [--solidify]`: create with explicit or generated draft acceptance criteria.
+Track units of work. Lifecycle: Open → Claimed → InProgress (Blocked) → InReview (QA) → Done → VerifiedDone; Cancelled from any of them.
+- `nool task create --name "<name>" [--acceptance "<criterion>"] [--rails <paths>] [--solidify]`: create with explicit or generated draft acceptance criteria. `--rails tests/,contracts/` names paths the task's work may not touch.
+- Rails: while the task is InProgress, a bound proposal that changes a rail (or, while it has rails, a policy bundle, ruleset or CI definition) is refused at the seal (`TASK_RAILS`, exit 2), and `nool code` refuses the write before any prompt. Unlock with a trusted `rail-amended` attestation on the task from another key: `nool attest record --target <task> --checker rails --assertion rail-amended --verdict pass`. The DSL predicate `task_rails_untouched` holds a completion to the same rule.
+- A criterion without a check is a wish: `nool task start` names them, and `nool code --exec --task` refuses a task whose criteria are all manual unless `[tasks] allow_manual_criteria = true`.
 - `nool task list [--active] [--limit <n>] [--json]` / `board` / `inbox` / `mine` / `show --id <id>`. `--active` hides Done, VerifiedDone, Cancelled and Removed tasks; `--limit` keeps the n highest-priority ones.
 - `nool task pick --id <id>`: claim. `nool task start --id <id>`: Claimed → InProgress.
 - `nool task qa --id <id>`: submit for QA review (criteria verified here).
 - `nool task finish --id <id>`: mark done (advisory unless criteria review is required).
-- `nool task verify-done --id <id>`: mark verified-done directly from any state.
+- `nool task verify-done --id <id> --landed-knot <knot>`: mark verified-done, from `Done` or `InReview` only, with a verification receipt against the landed knot.
 - `nool task assign`, `relate`, `block`, `cancel`, `telemetry --id <id>`.
-- `nool task edit --id <id> [--name …] [--desc …] [--priority N] [-s]`: change a task's name, description or priority in place; its id, history, links and state are kept.
+- `nool task edit --id <id> [--name …] [--desc …] [--priority N] [--rails <paths>] [-s]`: change a task's name, description, priority or rails (`--rails ""` clears them) in place; its id, history, links and state are kept.
 - `nool task remove --id <id>`: drop a task from active views, keeping its auditable history.
 - `nool task sync`: import tasks assigned to you from the configured providers (GitHub, Jira).
 - `nool task list-github` / `nool task import-github --repo <owner/repo> --issue <n>`, `nool task list-jira --project <KEY>` / `nool task import-jira --project <KEY> --issue <KEY-n>` (Team): list, or import one issue as a task with explicit (`--acceptance`) or generated draft criteria; `--thread`, `--solidify`.
@@ -807,6 +812,7 @@ Notifications when a session's work is done (7.10.0), configured in `~/.nool/cod
 - `nool code notify test [--sink <n>]`, `enable`, `disable`, `remove <n>`.
 
 ### `nool code doctor` / `trust` / `mcp` / `plugin`
+- `nool code uml <session> [--sequence] [--html <path>]`: the UML screen's diagram for a session from its event log, as Mermaid (`--sequence`: the session as a sequence diagram) or a page.
 - `nool code doctor [--all]`: every MCP server, instruction file, skill, hook, slash command and plugin a session imports, where each comes from, and what was skipped and why. `--all` also starts stdio MCP servers to list what they offer.
 - `nool code trust [--revoke]`: trust this repository so its project-level MCP servers, hooks and plugins load (they run commands): `nool.toml` `[code.hooks]` and `[tools.mcp]`, `.claude/settings*.json` hooks, `.mcp.json` and friends, `.nool/plugins`, `.nool/tools`. Editing any of them voids the trust until given again.
 - `nool code mcp list|add|remove|login|logout`: the MCP catalog and your servers in `~/.nool/code.toml`; `add <name>` from the catalog or `add <name> -- <command> [args...]`; `login` signs in to an OAuth HTTP server and stores tokens in the OS credential store.
@@ -827,4 +833,4 @@ Claude Code-format skills, hooks and agent definitions, managed for `nool code` 
 
 ---
 
-*Last updated: October 30, 2026 for Nool v7.23.0*
+*Last updated: November 2, 2026 for Nool v7.24.0*

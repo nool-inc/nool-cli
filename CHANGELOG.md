@@ -4,6 +4,30 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.24.0] - 2026-11-02
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.24.0
+
+### Added
+- **Task rails.** `nool task create|edit --rails <paths>` names paths a task's work may not touch. A proposal binds to the author's InProgress tasks and to any named by `propose --task` or `NOOL_BOUND_TASK`; one that changes a rail is refused at the seal (`TASK_RAILS`) until a trusted `rail-amended` attestation on the task from another key. Policy files, rulesets and CI definitions are governed rails. In `nool code` an agent's write to a rail is refused before it runs, and a session reads the rails from its task when it binds, failing closed when it cannot. The DSL predicate `task_rails_untouched` carries the check to a task's completion; it is unverifiable, never a pass, where rails were not computed (push, ingest, doctor). `nool task start` advises when no criterion has a check, the criteria inbox lists unchecked tasks, and `[tasks] allow_manual_criteria` lets `nool code --exec --task` run a task whose criteria are all manual.
+- **`tests_constrain_change` attestation.** After a passing full-mode ghost run, propose re-runs it on up to `[reification] max_mutants` (default 3) one-line mutants of the changed lines, within `mutation_budget_secs` (default 300). The seal records `pass` when every mutant was caught, `fail` naming each survivor's file, line and operator, or `error` when there was nothing to mutate or the budget ran out, never a pass. Mutations cover logic and boolean swaps, off-by-one on counts, branch swaps and zero returns, and are parse-checked for Rust, Go, Python, TypeScript and JavaScript. `[attestation.obligations]` can require it; `nool attest show` and `nool evidence knot` print a failure's detail.
+- **Labelled self-approval.** With `[approval] self_approval = "labelled"` landed, `nool approve` and `nool steer` by a sole developer record a signed, labelled self-approval instead of being refused. It is shown as self-approved, recorded by `nool audit verify` as a `self_approved` fact, and reported by `nool doctor` as `SELF_APPROVAL_ENABLED`. Off by default.
+- **`nool code uml <session> [--sequence] [--html <path>]`** exports the UML screen's Mermaid diagram, or a page, from a session's event log. Sessions now emit a progress signal per tool turn (new files, test delta, quiet turns), and the UML harness block shows "no progress for K turns".
+- **Mirror advance after a GitHub merge button**: the `nool-mirror-advance` workflow lets a CI replica (a released `nool` with `NOOL_CI_KEY`) pull the merge and move `refs/nool/mirror/main`. It does nothing when the secret is absent.
+
+### Changed
+- **Org search finds what local search finds.** Hub org search matches any query term as a prefix and ranks by length-normalised relevance. On a labelled set of 25 queries, recall@5 rose from 0.37 to 0.88 and MRR from 0.60 to 0.91, above local search. With the hub down, `--scope org` exits with the hub's error, and `[hub] search_scope = "org"` falls back to local search with a warning.
+- `nool code provider list` and `nool code doctor` warn when the running session server started with different provider credentials, naming the variable, never its value.
+
+### Fixed
+- **`nool admin plugin install` with a hyphenated plugin name.** The manifest is now written beside the module under the module's own name (plugin `a-b` builds `a_b.wasm`, so `a_b.toml`), where the policy gate and loader look for it. Under declared governance the gate used to refuse the policy it had just installed ("has no manifest"), and a `[tasks.lifecycle]` WASM guard could not find it. Reinstalling removes a manifest an older version named after the plugin, and uninstall removes either.
+- `nool admin plugin install` no longer truncates a module to 0 bytes when it already sits at its destination.
+- A steering approval still applies after other changes move the heads.
+- A `reify.lock` left by a process that has exited is taken over at once instead of waited out.
+
+### Upgrade note
+- Knots carrying task rails and the new attestation and approval data need 7.24.0 or later to read.
+
 ## [7.23.0] - 2026-10-30
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.23.0

@@ -4,6 +4,54 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.25.0] - 2026-11-07
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.25.0
+
+### Added
+- **One goal spine: Org → Dept → Team → Project → Epic → Task.** A thread is now an epic recorded in the DAG, so its creation, description, pin, tasks, owner and knots replicate on push and pull. Its status is derived from its tasks, its pin and an idle window, and `nool status`, `nool doctor`, the consoles and the MCP thread tools all read that one status. `nool thread show` / `thread list` show the epic card (status, tasks, done/total, cost, owner) and take `--json`.
+- **LevelMetrics card.** One additive card per task, epic, project and workspace group: counts, times, spend and owner. `nool workspace status [<node>] [--depth n] [--json]` returns it for any node, the workspace and project consoles render it with drill-down, and the hub's `/v1/org/rollup` returns it per placement. Drill-down visibility follows repository access and roll-up visibility follows governance grants. Children you can't read are left out and the card is marked partial.
+- **Owners in `workspace.toml`**, inherited down the tree and shown in `nool workspace status`. `nool workspace doctor` advises on groups that have no owner.
+- **`nool workspace goal --decompose`** creates the goal's epic and its task in every leaf project, with `--owner`, `--acceptance` and `--dry-run`. Goals and `goal-status` read each project's epic card. `nool task create --assign-to` assigns in the same step.
+- **Spend attributed per task.** `nool code` sessions and every fleet iteration record task-attributed run evidence, and reviewer-quorum costs carry the task, so task telemetry and roll-ups show real spend.
+- **`nool fleet code --thread <epic>` / `nool fleet plan --thread <epic>`** run an epic's runnable tasks in dependency-ordered waves. The fleet assigns each task when its wave starts and withdraws the dependents of a failed task.
+- **Why a knot was made.** `nool propose --why` and repeatable `--rejected` record the reason and the alternatives turned down, in the CLI and the MCP propose tool. They travel as `Nool-Why` / `Nool-Rejected` commit trailers, `nool why` shows them, and rejected alternatives become `dead_end` findings. `--why` also works on `nool admin team add`, `admin contract grant` and `team land`.
+- **`[gating] require_why = off | warn | block`.** The default `warn` prints one line when a code proposal has no `--why`; `block` refuses it. Config-only changes are exempt. `nool code` sessions pass their goal as the why.
+- **Failed attempts are remembered.** A proposal refused by a failing ghost-run test records a `dead_end` finding naming the failing tests, and discarding a try branch with unpromoted work records one with the branch intent. `nool context` recalls both.
+- **Branch-range approvals.** `nool approve --range <base>..<tip>` files one approval request for a whole branch. The push gate and `nool audit verify` count its decision for every knot from the base to the tip and none outside it, judged per knot against that knot's author and paths. Membership fails closed.
+- **GitHub PR approvals as evidence.** `nool pr merge --pr <n>` records one human-approval decision per reviewer whose latest review approves the head being merged, signed by the merge-queue key (`NOOL_MERGE_QUEUE_KEY`). `nool audit verify` lists them as `forge_approvals` and says whether each signer is a trusted checker.
+- **Adversarial review.** `nool attest adversarial <knot> --soul <name>` reviews a change as untrusted data with the charter from the knot's base revision and records an attestation naming provider, model, family and charter digest. It refuses to review a knot written by a model of its own family.
+- **Pinned reviewer charters.** `charter_sha256` under `[soul.<name>]` pins a reviewer's charter, and a soul whose charter no longer matches refuses to run. `nool doctor` reports `CHARTER_UNPINNED` as a warning and `CHARTER_PIN_MISMATCH` as blocking.
+- **`nool msg send --priority info | warn | risk | emergency`.** `warn` (the default) behaves as before, `info` waits for the next prompt, `risk` repeats at every tool call and blocks Stop until acknowledged, and `emergency` denies one tool call with its text, then behaves like `risk`. `nool status` counts unread messages by priority, and `nool msg` works inside a try worktree.
+- **Audit packs for NIST SSDF (SP 800-218) and SLSA v1.2 Source.** `nool audit verify --framework ssdf` and `--framework slsa-source` mark controls Nool can't evidence as inoperable with a reason. A compliance control mapping covers SOC 2, ISO 27001, PCI DSS, SOX ITGC, SSDF and SLSA Source.
+- **Governance warn mode.** `[governance] enforce = warn | block` applies at the seal, on pull, in authority checks and in `nool audit verify`.
+- **Release authority and path-scoped approvers.** Under declared governance a Release knot needs a releaser or admin grant, and `nool audit verify` names the grant behind every release. An approval counts only when the signer's grants for the role cover every changed path.
+- **Observer role.** An `observer` grant gives roll-up visibility only, with no publication, approval, steering, lifecycle or admin authority.
+- **Wait, don't fail, on task rails.** Under declared governance a rail violation, or `nool task edit --rails` on a started task, files a rails-amendment request and exits 3. Planners see it in `nool approval list`, and an approval lifts it only if filed after the rails were last set and given by someone other than the author and the assignee.
+- Licence issuing takes a repeatable `--org-issuer-key`, and an Enterprise org licence without one is refused.
+
+### Changed
+- **Blast radius starts from the changed symbols** for a path or knot target, falling back to the file when they aren't known, and the seal graph infers which receiver's method a file uses. On the Go fixture, precision rose from 0.43 to 1.0 at unchanged recall.
+- **Go methods are named by their receiver**: `PercentOff.Apply` and `FixedOff.Apply` are two symbols, and `blast-radius --symbol` accepts either spelling. NodeIDs are unchanged.
+- **Standing dependency-rule violations are reported.** `nool verify --all` lists existing `must_not_depend_on` violations with the file and the import, and `nool doctor`'s drift evidence names the import.
+- An approval request survives a seal that restamps the candidate's timestamp.
+- **`nool work` is retired.** `work start` remains for one release as a deprecated alias that creates an intent thread and its tasks; help and guides recommend `nool thread create`. `fleet plan --from-thread`, `--task id=paths` and `--fleet-task` print a deprecation warning.
+- The Claude Code hook runs pre-tool policy and judges git commits in the directory they run in. Governed `nool init` writes the hook to `.claude/settings.local.json`, refuses malformed settings JSON, and adds starter rules for secret files and test integrity.
+- `content_contains` / `content_matches` are the documented DSL names (`diff_contains` / `diff_matches` remain as aliases), and a pre-push rule judges only knots that descend from the knot that landed the rule's current bytes.
+- An editor-contract denial names the gate and the fix instead of a bare 403. `nool policy stats` counts scope-justification passes, so `doctor --strict` stops warning `GATE_FIRST_RUN_LOW`. The mutation probe swaps `min(` and `max(` calls, and `propose --compact` prints a few lines.
+
+### Fixed
+- `nool push` merges a detached chain the remote refuses as non-fast-forward, so the mirror pointer is no longer left behind.
+- `nool admin plugin install` refuses a raw core-module policy before writing anything, and a failed install restores `policies/` and `nool.toml`.
+- `nool try rebase` refuses to overwrite unproposed worktree edits.
+- A mutation-probe mutant left behind by a killed propose is restored, and a char-boundary panic in mutant generation on non-ASCII code is fixed.
+- Ghost-run logs keep the path separator when the scratch directory is rewritten.
+- A Go/Java package clause no longer counts as a use of a same-named symbol.
+- `nool criteria set --acceptance` replaces criteria translated from the legacy format, and `nool workspace doctor` no longer calls a declaration of a group folder stale.
+
+### Upgrade note
+- Knot model revisions 4–7 add epics, fleet batch assign/cancel, the observer role, range approvals and a self-review criteria action; approval links and the why/priority data are also new. Older binaries can't read knots that use them, so upgrade every replica first.
+
 ## [7.24.0] - 2026-11-02
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.24.0

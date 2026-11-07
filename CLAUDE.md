@@ -1,7 +1,7 @@
 # Nool CLI Project Guide
 
 **Project**: Nool Operational Continuity Infrastructure  
-**Current Version**: v7.24.0 — synced to the installed `nool` CLI surface.  
+**Current Version**: v7.25.0 — synced to the installed `nool` CLI surface.  
 **Repository Type**: CLI source checkout  
 **MCP Server**: Nool MCP (nool-mcp) — installed locally
 
@@ -643,8 +643,8 @@ nool push origin       # Replicate changes
 ## 📊 Repository State
 
 ### Current Version
-- **Nool**: v7.24.0
-- **Last Updated**: November 3, 2026
+- **Nool**: v7.25.0
+- **Last Updated**: November 7, 2026
 - **Commands Documented**: 46+ with 90+ subcommands
 
 ### When a new Nool version ships

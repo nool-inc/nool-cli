@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.24.0
+**Version**: 7.25.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -38,7 +38,8 @@ Rewind workspace state to a previous Knot or Intent checkpoint.
 ## 2. Work & Intent Management
 
 ### `nool work start`
-Start a new work item with optional parallel subtasks. Follow `nool announce intent` for shared work, then split into `nool task create` or `nool try new`.
+Deprecated: removed in the next release (for now it creates a thread named after `--intent` holding `--parallel` tasks).
+Use instead: `nool thread create --name <slug> --desc "<intent>"`, then `nool task create --thread <slug> --name "..." --solidify` per task.
 
 ### `nool announce intent`
 Announce intent before starting work. Files a fencing lease (v7.0 "leases v2"): a `grant_seq` is assigned at grant and re-checked at `solidify`, so an expired or superseded lease is refused even if it looked valid when the work started.
@@ -327,7 +328,7 @@ Compare changes between threads or releases. `--shared` also prints common knots
 File-content differences between two states (defaults: working tree vs HEAD).
 
 ### `nool link <knot_id>`
-Link existing history to intent or thread metadata. `-i, --intent`, `-t, --thread`.
+Link existing history to intent or thread metadata. `-i, --intent`, `-t, --thread` (`--thread <epic>` seals a knot that puts `<knot_id>` in that epic; it replicates).
 
 ### `nool pluck <thread_name>`
 Remove a thread from the active timeline while retaining history.
@@ -344,12 +345,13 @@ Track units of work. Lifecycle: Open → Claimed → InProgress (Blocked) → In
 - `nool task create --name "<name>" [--acceptance "<criterion>"] [--rails <paths>] [--solidify]`: create with explicit or generated draft acceptance criteria. `--rails tests/,contracts/` names paths the task's work may not touch.
 - Rails: while the task is InProgress, a bound proposal that changes a rail (or, while it has rails, a policy bundle, ruleset or CI definition) is refused at the seal (`TASK_RAILS`, exit 2), and `nool code` refuses the write before any prompt. Unlock with a trusted `rail-amended` attestation on the task from another key: `nool attest record --target <task> --checker rails --assertion rail-amended --verdict pass`. The DSL predicate `task_rails_untouched` holds a completion to the same rule.
 - A criterion without a check is a wish: `nool task start` names them, and `nool code --exec --task` refuses a task whose criteria are all manual unless `[tasks] allow_manual_criteria = true`.
-- `nool task list [--active] [--limit <n>] [--json]` / `board` / `inbox` / `mine` / `show --id <id>`. `--active` hides Done, VerifiedDone, Cancelled and Removed tasks; `--limit` keeps the n highest-priority ones.
+- `nool task list [--active] [--limit <n>] [--thread <epic>] [--json]` / `board` / `inbox` / `mine` / `show --id <id>`. `--active` hides Done, VerifiedDone, Cancelled and Removed tasks; `--limit` keeps the n highest-priority ones.
 - `nool task pick --id <id>`: claim. `nool task start --id <id>`: Claimed → InProgress.
 - `nool task qa --id <id>`: submit for QA review (criteria verified here).
 - `nool task finish --id <id>`: mark done (advisory unless criteria review is required).
 - `nool task verify-done --id <id> --landed-knot <knot>`: mark verified-done, from `Done` or `InReview` only, with a verification receipt against the landed knot.
-- `nool task assign`, `relate`, `block`, `cancel`, `telemetry --id <id>`.
+- `nool task assign`, `relate`, `block`, `cancel`, `telemetry --id <id>` (sums the `agent_run` evidence written with the task's id by `nool code --task` sessions and fleet children, plus the reviewer councils that judged it).
+- `nool task create --thread <epic>` puts the task in an epic in its own creating knot; `nool task edit --id <id> --thread <epic>` moves it (a new name creates the epic), `--no-thread` takes it out. A task is in one epic at a time.
 - `nool task edit --id <id> [--name …] [--desc …] [--priority N] [--rails <paths>] [-s]`: change a task's name, description, priority or rails (`--rails ""` clears them) in place; its id, history, links and state are kept.
 - `nool task remove --id <id>`: drop a task from active views, keeping its auditable history.
 - `nool task sync`: import tasks assigned to you from the configured providers (GitHub, Jira).
@@ -360,9 +362,11 @@ Track units of work. Lifecycle: Open → Claimed → InProgress (Blocked) → In
 - `nool task criteria inbox|set|review`: acceptance-criteria management (advisory, never blocks execution).
 
 ### `nool thread`
-Manage intent threads.
-- `nool thread create | list | show [--full] | handoff`.
-- `nool thread status --name <thread> --status <draft|active|review|released|archived>`: set a thread's status.
+Manage intent threads. A thread is the epic of the spine Org → Dept → Team → Project → Epic → Task → Run: its name, description, tasks, status pin and owner are knots, so it replicates with push and pull, and a name has the same id in every repository.
+- `nool thread create --name <epic> [--desc <text>]`: seal the epic's creation knot.
+- `nool thread list [--fuzzy <q>] [--active]` / `handoff`. `--active` keeps epics whose derived status is active or review.
+- `nool thread show <epic> [--full] [--json]`: the epic's card: tasks (state, assignee, cost), derived status and pin, done/total, attributed cost, owner (the newest handoff's recipient), knots in time order.
+- `nool thread status --name <epic> --status <draft|active|review|released|archived>`: pin a status. Otherwise the status is derived from the tasks: none → `draft` (or the pin); all withdrawn → `archived`; every remaining one done → `released`; else `active` (`review` while pinned so); an `archived` pin always wins, and an epic idle past `[threads] auto_archive_idle_days` derives to `archived`.
 - `nool thread chat <thread> [--message "<text>"] [--ttl <t>]`: add a note to a thread, or view its notes.
 
 ### `nool bug`
@@ -487,7 +491,7 @@ Serialize non-canonical views of the semantic architecture model.
 
 ### `nool usage`
 Show token usage, budgets, and thread costs. With no subcommand, prints per-provider/per-model token consumption.
-- `nool usage usage | budget-set | budget-status | analytics | agent | thread | dashboard`.
+- `nool usage usage | budget-set | budget-status | analytics | agent | thread | dashboard`. `nool usage thread --name <epic>` counts only writer-attributed rows; time-correlated ones are printed apart as estimates and never added.
 - `nool usage bounce [--hours <n>] [--json]`: bounces: compressed context an agent then re-read in full (context that cost more than it saved).
 
 ### `nool insights`
@@ -512,9 +516,9 @@ Inspect declarative agent specs.
 
 ### `nool fleet`
 Plan and run fleets of sovereign agents over a goal.
-- `nool fleet plan --task 'id=paths[: description]' [--width <n>|auto] [--run <builder.yaml>] [--isolation shared|worktree]`: preview the NodeID-disjoint parallel wave partition (no spend). Under `--run` the description (after the first `: `, as `--fleet-task` reads it) is that task's builder instruction; without one the builder gets only the id. Every isolated builder is told how its work lands (`nool propose` in its checkout, or the `nool.propose` tool); a branch with nothing to land is reported `nothing-to-land` and is not ok. `--width` caps concurrency per wave: an integer, or `auto` to take the minimum of usable cores (minus `[fleet] reserved_cpus`), available memory over `memory_per_agent_mb`, and the remaining `budget_usd_per_day` over the builder's `per_run_usd`; the printed `Ceiling:` line and the `--json` `width_decision` name which one bound it. Defaults to `[fleet] width`, else `auto` (bounded by `[fleet] max_width`, 16). `--run` executes it, giving each task its own try branch, agent id, and lease. `--isolation worktree` gives each task its own `.nool/try/<run>-<task>/` checkout instead of the shared tree; `--overlap parallel` (worktree only) runs overlapping tasks at once and orders their promotes with `--after`.
+- `nool fleet plan --thread <epic> [--width <n>|auto] [--run <builder.yaml>] [--isolation shared|worktree]`: preview the NodeID-disjoint parallel wave partition of the epic's open tasks, in dependency order (no spend; a task without scope is refused). The deprecated `--task 'id=paths[: description]'` still works and prints a warning. Under `--run` the description (after the first `: `, as `--fleet-task` reads it) is that task's builder instruction; without one the builder gets only the id. Every isolated builder is told how its work lands (`nool propose` in its checkout, or the `nool.propose` tool); a branch with nothing to land is reported `nothing-to-land` and is not ok. `--width` caps concurrency per wave: an integer, or `auto` to take the minimum of usable cores (minus `[fleet] reserved_cpus`), available memory over `memory_per_agent_mb`, and the remaining `budget_usd_per_day` over the builder's `per_run_usd`; the printed `Ceiling:` line and the `--json` `width_decision` name which one bound it. Defaults to `[fleet] width`, else `auto` (bounded by `[fleet] max_width`, 16). `--run` executes it, giving each task its own try branch, agent id, and lease. `--isolation worktree` gives each task its own `.nool/try/<run>-<task>/` checkout instead of the shared tree; `--overlap parallel` (worktree only) runs overlapping tasks at once and orders their promotes with `--after`.
 - `nool fleet capacity [--width <n>|auto] [--builder <spec>] [--json]`: report the wave-concurrency ceiling for this machine and budget without planning anything — each probe's width (CPU, memory, budget), which one binds, and the `[fleet]` settings that produced it. `--builder` supplies the `budget.per_run_usd` that lets the daily allowance bind.
-- `nool fleet code --goal "<goal>" [--task <spec>]... [--builder <b.yaml>] [--reviewer <r.yaml>]... [--width <n>] [--max-iterations <n>] [--json]`: the `nool code --fleet` engine driven by agent YAML specs (model and budget presets): a coordinator plans the goal (or `--task` gives the tasks), each task runs as a child session on its own worktree, reviewers judge each verified child, children land in dependency order and one integrated check decides. For local + cloud sandbox pools use `nool code --fleet --pool …` (§19, and `docs/FLEET_POOLS.md`).
+- `nool fleet code [--goal "<goal>"] [--thread <epic>] [--builder <b.yaml>] [--reviewer <r.yaml>]... [--width <n>] [--max-iterations <n>] [--json]`: the `nool code --fleet` engine driven by agent YAML specs (model and budget presets): a coordinator plans the goal into the epic's tasks, each task runs as a child session on its own worktree, reviewers judge each verified child, children land in dependency order and one integrated check decides. `--thread <epic>` runs an epic that has Open/Blocked tasks with their stored scope, dependencies and criteria (`--goal` is then optional), and plans into an empty or new one (default `fleet-<id>`). Deprecated: `--from-thread` (alias of `--thread`) and `--task id=paths` (prints a warning). The fleet assigns each task when its wave starts and withdraws (cancels) the dependents it skips after a failure; each child iteration and reviewer council records its spend against the task. For local + cloud sandbox pools use `nool code --fleet --pool …` (§19, and `docs/FLEET_POOLS.md`).
 - `nool fleet advise`: recommend Single / ParallelIndependent / CentralizedQuorum architecture from measurable task signals, before spending.
 - `nool fleet ps`: the `nool code` fleets running in this repository, with their task counts.
 - `nool fleet status [<fleet>] [--json]`: a fleet's pools (capacity, load, draining, how children reach the model), routes and tasks (phase, pool, sandbox, spend and gateway spend, why it stopped). A running fleet is read live; an ended one from `.nool/code/<fleet>/fleet.ndjson`.
@@ -562,15 +566,16 @@ Render the model-facing TOON work order for an agent (see above).
 ### `nool workspace`
 Coordinate a polyglot workspace of nested Nool projects (Org→Dept→Team→Project).
 - `nool workspace init`: generate `workspace.toml`, pre-populated with discovered projects.
-- `nool workspace status`: project tree, declared edges, order.
-- `nool workspace doctor [--recursive]`: reconcile declared config vs discovered projects; `--recursive` also runs `nool doctor` per project and names projects whose grants are for another organisation.
-- `nool workspace goal [--decompose <target>=<task>]`: build a goal (fan-out or absorb).
-- `nool workspace goals | goal-status`: list goals / per-project completion.
+- `nool workspace status [<node>] [--depth <n>] [--json]`: project tree with each node's owner, declared edges, order, and the `LevelMetrics` card (task counts by state, epic counts by status, attributed cost with `unbound` spend apart, effort and span, estimates apart; ratios derived). `<node>` is a tree path, a project or `<project>/<epic>`; a project that cannot be opened is marked partial. `--hub [--org <id>] [--path <placement>]` reads the hub's `/v1/org/rollup` instead.
+- `workspace.toml` `[workspace] owner = "…"` / `agent = "…"` (and per child under `[workspace.projects.<name>]`): the level's owner and default persona, inherited by every node beneath that declares none.
+- `nool workspace doctor [--recursive]`: reconcile declared config vs discovered projects; `--recursive` also runs `nool doctor` per project and names projects whose grants are for another organisation. Advises on groups with no owner.
+- `nool workspace goal --intent "<intent>" [--decompose <target>=<task>]... [--owner <id>] [--acceptance <c>]... [--dry-run] [--no-save]`: a goal is an epic of the same name in every project it touches. With `--decompose`, each leaf beneath `<target>` gets the epic (`thread create`) and the task in it (`task create --thread`, with `--acceptance`, and `--assign-to` when `--owner` is a hex key); `--dry-run` previews. Without it, recent knots are linked into each project's epic (`nool link --thread`). Saved by default as an index under `.nool/workspace/goals/`.
+- `nool workspace goals [--json] | goal-status [--goal <id>] [--json]`: list goals / per-project completion, read from each project's epic (an unreadable one is `null` and counts as not done).
 - `nool workspace insights | telemetry`: roll up insights / cost across children.
 - `nool workspace search "<query>" [--limit <n>] [--fuzzy] [--json]`: search every project's own index, results grouped by project.
 - `nool workspace visualize`: visualize the Org→Dept→Team→Project tree.
 - `nool workspace pull | sync`: propagate DAG changes across children in dependency order.
-- `nool workspace console`: roll-up web console (port 4002).
+- `nool workspace console`: roll-up web console (port 4002); its Card panel drills the card through `GET /api/workspace/card?node=<path>&depth=<n>`. A project's `nool console` (port 4001) has a Card tab from `GET /api/card[?epic=<name>]`.
 
 ---
 
@@ -611,7 +616,7 @@ Manage account settings, plugins, and billing.
 - `nool admin team invite <email>`: invite a teammate onto your Team subscription (refused once every seat is taken).
 - `nool admin channel create --name <name>` / `nool admin channel list`: notification channels.
 - `nool admin gc [--force]`: resource cleanup. `nool admin reconcile [--batch-size <n>]`: process the self-healing repair queue. `nool admin reindex-graph`: rebuild the entity dependency graph from the working tree. `nool admin train-dict`: deprecated no-op.
-- `nool admin team add --id <key> [--role <role>] [--scope <glob>]... [--destination <destination>]... [--expiry-days <n>]`: grant a key a role (`admin`, `approver`, `editor`, `planner`, `reviewer`, `coordinator`, `releaser`, `auditor`, `steer:<role>`). `--destination https|ssh://host/owner/repo#refs/...` makes it a destination-scoped grant: under `[publication].destination` a non-admin needs one naming that destination to land changes. Enforced where the issuer is trusted (`[governance] issuer_keys`, a licence's organisation keys, or a workspace's `[workspace.governance]`). At a workspace root the one grant lands in every repository beneath it.
+- `nool admin team add --id <key> [--role <role>] [--scope <glob>]... [--destination <destination>]... [--expiry-days <n>]`: grant a key a role (`admin`, `approver`, `editor`, `planner`, `reviewer`, `coordinator`, `releaser`, `auditor`, `observer`, `steer:<role>`). `observer` sees hub roll-ups over its scope and satisfies no other check. `--destination https|ssh://host/owner/repo#refs/...` makes it a destination-scoped grant: under `[publication].destination` a non-admin needs one naming that destination to land changes. Enforced where the issuer is trusted (`[governance] issuer_keys`, a licence's organisation keys, or a workspace's `[workspace.governance]`). At a workspace root the one grant lands in every repository beneath it.
 - `nool admin team list`: every grant and whether it stands; at a workspace root, per repository. `nool admin team key`: this machine's public key.
 - `nool admin revoke <grant-id | key> [--reason <text>]`: end a grant, or every grant of a key.
 - `nool admin plugin pin`: pin the policy set in `[aram] policies`; land `nool.toml` afterwards.
@@ -833,4 +838,4 @@ Claude Code-format skills, hooks and agent definitions, managed for `nool code` 
 
 ---
 
-*Last updated: November 2, 2026 for Nool v7.24.0*
+*Last updated: November 7, 2026 for Nool v7.25.0*

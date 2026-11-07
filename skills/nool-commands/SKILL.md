@@ -1,15 +1,15 @@
 ---
 name: nool-commands
-description: Expert guidance for the Nool CLI (v7.24.0) in any Nool-tracked repository - landing changes (propose/solidify), reading code by symbol, multi-agent coordination (announce, leases, try worktrees), tasks, bugs and the knowledge ledger, debugging, and the nool code agent harness. The full command reference is Commands.md beside this file.
+description: Expert guidance for the Nool CLI (v7.25.0) in any Nool-tracked repository - landing changes (propose/solidify), reading code by symbol, multi-agent coordination (announce, leases, try worktrees), tasks, bugs and the knowledge ledger, debugging, and the nool code agent harness. The full command reference is Commands.md beside this file.
 license: Apache-2.0
 metadata:
-  version: "7.24.0"
+  version: "7.25.0"
   author: nool-core-team
-compatibility: Requires nool CLI v7.24.0+
+compatibility: Requires nool CLI v7.25.0+
 allowed-tools: bash(nool *)
 ---
 
-# Nool CLI (v7.24.0)
+# Nool CLI (v7.25.0)
 
 Nool is a semantic version control system: the source of truth is the **Knot DAG**, not text, and every landed change is a signed **knot** mirrored to Git. In a Nool-tracked repository (confirm with `nool status`), use `nool` for version control, tasks, bugs and debugging instead of raw `git`; raw history-writing git verbs are refused there.
 
@@ -72,6 +72,8 @@ nool task inbox | mine | board | show --id <id>
 nool task pick --id <id> -s ; nool task start --id <id> -s
 nool task finish --id <id> --landed-knot <knot id, short id ok> --test-note "<what proved it>" -s
 ```
+
+An intent thread is the epic that groups tasks: `nool thread create --name <epic> --desc "…"`, then `task create --thread <epic>` (`task edit --id <id> --thread <epic> | --no-thread` moves one; `task list --thread <epic>` filters). `nool thread show <epic> [--json]` is its card: tasks, status derived from them, owner, attributed cost. `nool workspace goal` and `nool workspace status` carry the same spine across projects (Org → Dept → Team → Project → Epic → Task).
 
 `--rails <paths>` on create/edit names paths the task's work may not touch; a bound proposal that changes one is refused (`TASK_RAILS`). A task change without `--solidify` is only staged. `nool task criteria inbox|set|review` manages acceptance criteria. Edit, cancel, relate, block, assign, import and sync are in Commands.md §9.
 

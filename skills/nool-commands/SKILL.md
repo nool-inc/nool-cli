@@ -1,15 +1,15 @@
 ---
 name: nool-commands
-description: Expert guidance for the Nool CLI (v7.25.0) in any Nool-tracked repository - landing changes (propose/solidify), reading code by symbol, multi-agent coordination (announce, leases, try worktrees), tasks, bugs and the knowledge ledger, debugging, and the nool code agent harness. The full command reference is Commands.md beside this file.
+description: Expert guidance for the Nool CLI (v7.28.0) in any Nool-tracked repository - landing changes (propose/solidify), reading code by symbol, multi-agent coordination (announce, leases, try worktrees), tasks, bugs and the knowledge ledger, debugging, and the nool code agent harness. The full command reference is Commands.md beside this file.
 license: Apache-2.0
 metadata:
-  version: "7.25.0"
+  version: "7.28.0"
   author: nool-core-team
-compatibility: Requires nool CLI v7.25.0+
+compatibility: Requires nool CLI v7.28.0+
 allowed-tools: bash(nool *)
 ---
 
-# Nool CLI (v7.25.0)
+# Nool CLI (v7.28.0)
 
 Nool is a semantic version control system: the source of truth is the **Knot DAG**, not text, and every landed change is a signed **knot** mirrored to Git. In a Nool-tracked repository (confirm with `nool status`), use `nool` for version control, tasks, bugs and debugging instead of raw `git`; raw history-writing git verbs are refused there.
 
@@ -35,20 +35,30 @@ Both commands parse the file live and need no index. Use them instead of reading
 
 ## Land a change (the golden path)
 
+The same steps are correct whether you are the only agent in the repository or one of several:
+
 ```bash
-nool status --compact
-nool announce intent --intent "<what>" --target-nodes <paths>   # shared tree: declare what you touch
-nool discover conflicts <paths>                                   # exit 3 = someone else holds it
-nool propose --path <file> [--path <file>…] --intent "<what>" --solidify
+nool status --compact                                             # another agent's lease listed = multi-agent mode
+nool announce intent --intent "<what>" --target-nodes <paths>   # declare what you touch
+nool discover conflicts <paths>                                   # exit 3 = someone else holds it: see below
+nool propose --path <file> [--path <file>…] --intent "<what>" --why "<why>" --solidify --detach   # prints <id> at once
+nool land wait <id>    # one verdict line + the landing's exit code; exit 3 = still running, run it again
 ```
 
-- **Name your files.** `--all` sweeps every dirty file, including other agents' unfinished work. Use it only in a `nool try` worktree or a tree nobody else edits. To land only some hunks of a shared file: `--hunks f.rs#10-24`.
+- **Single agent.** Keep the announcement: it is cheap, the propose lands under it, and the landing renews it while it queues. Without `--detach` the propose runs in the foreground and prints `✓ Landed knot <id>`.
+- **Multi-agent** (another agent's lease is listed, or you run or are a subagent). Name only your own changes: `--hunks f.rs#10-24` for a file others also edit, `--path` for files only you touch. For isolated or throwaway work, use your own worktree: `nool try new <name> --worktree --nodes <paths>`, then `propose --all --try-branch <name>` there and `nool try promote <name>`. Co-located agents need distinct identities (`--as-agent` or `NOOL_AGENT_ID`).
+- **Wait with `nool land wait`, never a sleep loop over a log.** Under a tool-call time limit, pass `--timeout-ms` below it and re-run on exit 3. The full output is in `.nool/landings/<id>.log`. `nool land status` shows the landing queue.
+- **Name your files.** `--all` sweeps every dirty file, including other agents' unfinished work. Use it only in a `nool try` worktree or a tree nobody else edits.
+- **Say why.** `--why` is recorded in the knot and shown by `nool why`; `[gating] require_why` warns (or blocks) when a code proposal has none.
 - **Land code that builds.** Full validation (the default) runs the language's integrity driver ("ghost run": build plus the selected tests) on HEAD plus your files, in a private worktree. Other sessions' uncommitted edits never affect it. A refusal names the failing tests. An identical re-propose (same HEAD, same files, same toolchain) reuses the earlier passing verdict instead of rebuilding.
 - `--fast` defers validation and is an explicit, unsafe opt-in. Settle the debt with `nool validate --all` before you stop.
 - Without `--solidify`, `propose` only stages a candidate; seal your own with `nool solidify --candidate <id>`. A plain `solidify` takes the oldest candidate, which may belong to someone else.
 - A broad change needs `--justification "<why>"`. A steer gate prints the exact `nool steer …` command that clears it.
-- A long landing need not block you: `nool propose … --solidify --detach` prints an id at once, and `nool land wait <id>` later prints one verdict line with the landing's exit code. Do not poll a log in a sleep loop.
 - Replicate with `nool push <remote>` / `nool pull <remote>`; accept a branch with `nool merge <branch>`.
+
+## Wait on other agents
+
+`nool lease wait <paths>` and `nool announce wait <scope> --timeout-ms N` block until another agent's files free (exit 3 at the timeout), instead of a sleep loop over `lease status`. A `nool try promote` runs in the foreground, or in the background with its completion notice as the wait. To ask the holder: `nool msg send --to <agent> "<message>"`.
 
 ## Choose the verb by situation
 
@@ -60,7 +70,7 @@ nool propose --path <file> [--path <file>…] --intent "<what>" --solidify
 | Several independent tasks in parallel | `nool fleet advise` → `fleet plan` → `fleet start` |
 | Reach the agent you collided with | `nool msg send --to <agent> "<message>"` (`nool msg inbox` to read yours) |
 
-Try worktrees live at `.nool/try/<name>/`. Run `propose --try-branch <name>` (or `--all`) inside one. `nool try rebase <name>` merges main's drift in before `promote`. Leases: `nool lease status`, `nool lease wait <paths>`, `nool lease release <id>`; `--as-agent` or `NOOL_AGENT_ID` give co-located agents distinct identities. An announcement without `--target-nodes` protects nothing.
+Try worktrees live at `.nool/try/<name>/`. Run `propose --try-branch <name>` (or `--all`) inside one. `nool try rebase <name>` merges main's drift in before `promote`. Leases: `nool lease status`, `nool lease release <id>`; `--as-agent` or `NOOL_AGENT_ID` give co-located agents distinct identities. An announcement without `--target-nodes` protects nothing.
 
 ## Tasks
 

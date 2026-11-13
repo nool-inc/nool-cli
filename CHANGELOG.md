@@ -4,6 +4,38 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.28.0] - 2026-11-13
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.28.0
+
+### Added
+- **Enforced task lifecycles.** A declared lifecycle gates QA and finish, so a task can't be done until it reaches the required state. `required_for_start` sets where a task leaves draft, and a required state stops counting once the task is sent back before it. Each state can name the soul that owns it and the kind of evidence a move needs. A `requires_approval` guard needs a person other than the mover to approve, with a comment. Change types let a task pick one of several lifecycles (standard, normal, emergency), and the lifecycle lint reports dead ends.
+- **Code proposals belong to a task.** `[tasks] require_task = off | warn | block` controls whether a code proposal needs an in-progress task, and a lifecycle can declare which states allow code. `nool code` drives its task through the declared lifecycle and can't skip or reorder steps; its board shows who works each column, where code lands, and `advance`. The goal-complete attestation cites the lifecycle receipts and the floor in force.
+- **Organisation floor** (tighten-only): it can mandate a task lifecycle and `require_task` (also an audit control), set a model and backend allowlist, and install hooks that a repository can't remove.
+- **Daemon-owned landing queue.** Landings are admitted by declared driver weight and free disk, in FIFO order, and `nool land status` shows the queue and batch membership. Compatible queued candidates are batched into one integrity run that bisects on failure. The queue reserves the disk a language's runs actually used, and build slots are exclusive per adapter and checkout. Blast scope, hunks, conflicts, precheck and the pre-flight judge refuse before a candidate waits for a slot.
+- **Verify anywhere, seal in order.** Adapters declare region, concurrency and environment prefixes. A verdict goes stale when a manifest or lockfile above it lands, a `[reification.dependencies]` source changes, or an unknown-region file changes; otherwise it is reused across unrelated landings. A candidate with files in several languages runs one driver per language. Try-worktree runs record verdicts that the seal accepts on promote, and one worktree per agent is the multi-agent default.
+- **Stacked work.** A queued candidate downgrades its lease so it stops blocking its files. `nool try new <name> --onto <queued-candidate>` builds on it, and stacked branches are told if it is refused.
+- **Test selection by cost budget** instead of the 40% cliff. A lockfile decides by its content whether the build config changed, and files with no footprint can declare test sets. The landing log splits check, dependency build and test time, and shows cold or warm caches.
+- **More integrity drivers:** Bazel and Buck2 (the declared target graph bounds selection and blast radius), C#, Swift, PHP and Ruby, and worker flags for jest and vitest. Every adapter declares cache directories, lockfiles, weight, a parallel-test flag and a profile command. Anti-slop lint presets enable a language's checks in warn mode with one line.
+- **Topic channels (`nool topic`)** over the hub: join, publish and resume, a client for agents without a daemon, delivery into running `nool code` sessions and MCP clients, requests with a reply deadline and escalation, presence, restricted member lists, limits and retention, NATS deployments, and sealed topics with MLS (RFC 9420) end-to-end encryption.
+- **Agent inbox in Claude Code:** unread messages, handoffs and landing events arrive as a one-line digest with the next tool result. A blocked fleet builder parks on a bus waiter, frees its slot, and resumes with the wake event in context.
+- **Workload identity.** The hub issues short-lived grants on a workload token (JWT-SVID, CI OIDC or a Kubernetes service account), with delegated child grants. CI jobs get per-job ephemeral signing identities, the daemon acts as a local Workload API, and fleet children and remote sandboxes get delegated keys. Hub roles use mTLS with SVIDs and the operator bearer token is break-glass only; the grant-issuer key lives in KMS. Organisation admins can register their own issuers, and an optional SPIRE adapter is available.
+- **GitHub.** The hub publishes landing verdicts as check runs on pull requests and verifies PR-branch knots before merge. `nool github login | status | logout` signs in to the Nool GitHub App and installs a git credential helper.
+- **Jira sync** for Team and Enterprise: epics map to threads, lifecycles are mirrored, cards are pushed back, and sync is incremental with outbound creation.
+- A hub-module edge invariant warns when a proposal adds a dependency edge into a high fan-in entity.
+
+### Changed
+- Gates that a local edit must not relax read the landed configuration at the seal, not the working `nool.toml`, and contract change notices read the landed commit. Steering rules landed at HEAD stay in force for the change that removes them.
+- Hooks and the skill lead with `nool propose --detach` + `nool land wait`, `nool lease wait` and `nool announce wait`; a PreToolUse hook denies sleep loops over a Nool landing log.
+- `nool init` reports each graph-building phase with done/total counts.
+
+### Fixed
+- `nool land wait` no longer reports a false "staged candidate" while a detached landing is still running.
+- A fully qualified Rust call into another workspace crate creates a dependency edge, so the seal no longer trusts a stale verdict.
+- `nool try promote` no longer trusts a branch's recorded verdict after main changed its dependencies.
+- A second landing on the same thread no longer times out while the first re-validates its seal.
+- `nool propose --hunks` ranges match `git diff -U0`.
+
 ## [7.25.0] - 2026-11-07
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.25.0

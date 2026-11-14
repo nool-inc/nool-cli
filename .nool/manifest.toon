@@ -1,7 +1,7 @@
 commit_policy_hash: 2e8b563ff1a0f6d478257fc6a82b13ac853a3787b40d0cc00df2893e7522a5c1
 commit_policy_version: 1
 commit_template_hash: 686bd6f6d3f60a9716f8ca85195b61c4852e2e6d8a91cf7a01fc867d6252a9af
-intent: Release: 7.28.0
-knot_id: 3230592413ea15aceb64d57b51333b4ffeb1a4dc7c59913c3984f98f49224f1a
-solidified_at: 1794587581917
-thread: 
+intent: 7.28.0 changelog: drop change types and typed evidence (not shipped); inbox digest wording
+knot_id: 07ea1994b875e4147878195f0d48a7f7274d0540c3b36acd98683092a6182792
+solidified_at: 1794614690975
+thread: main

@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.28.0
+**Version**: 7.29.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -130,7 +130,7 @@ Generate a candidate Knot.
 Shortcut: `nool propose --path <file>… --intent "..." --solidify --detach`, then `nool land wait <id>`. Name the files you changed: `--all` sweeps every dirty file, including other agents' work in a shared tree, so keep it for a `nool try` worktree. Propose only code that builds.
 
 ### `nool land wait <id>`
-Wait for a landing started with `nool propose … --detach`, which runs the propose as a detached background process and prints its id at once. `land wait` blocks until it ends, prints one line (`landed <knot>`, `staged candidate <id>`, or `refused (<outcome>, <reason>): <message>`) and exits with the landing's own exit code; exit 3 if it is still running at the timeout. Use it instead of backgrounding a propose and polling its output.
+Wait for a landing started with `nool propose … --detach`, which runs the propose as a detached background process and prints its id at once. `land wait` blocks until it ends, prints one line (`landed <knot>`, `staged candidate <id>`, or `refused (<outcome>, <reason>): <message>`) and exits with the landing's own exit code; exit 3 if it is still running at the timeout. A landing refused on a lease conflict also exits 3, every time it is waited on: the line starts `refused (conflict, …)` and its `--json` carries an `error` object (`error.outcome` = `conflict`) where a running landing has `"outcome": "running"`, so wait for the lease (`nool lease wait <paths>`) and propose again instead of re-running `land wait`. Use it instead of backgrounding a propose and polling its output.
 - `--timeout-ms <n>` (default 1800000), `--json`.
 - The landing's full output is in `.nool/landings/<id>.log`.
 - Detached landings wait in the machine's landing queue before they run: admission is FIFO on three axes (CPU tokens, `ram_mb`, free disk) against `[landing]` in `nool.toml` (`cpu_tokens`, `ram_mb`, `min_free_gb` default 8, `daemon_ram_mb`, `default_need`). Below `min_free_gb` everything holds and says why. `land wait` prints the queue events on stderr (`landing.queued`, `landing.started`, `landing.landed`, `landing.refused`); the same events reach the owner's `nool msg inbox --wait`.
@@ -867,4 +867,4 @@ Claude Code-format skills, hooks and agent definitions, managed for `nool code` 
 
 ---
 
-*Last updated: November 13, 2026 for Nool v7.28.0*
+*Last updated: November 15, 2026 for Nool v7.29.0*

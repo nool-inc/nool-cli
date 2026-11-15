@@ -1,15 +1,15 @@
 ---
 name: nool-commands
-description: Expert guidance for the Nool CLI (v7.28.0) in any Nool-tracked repository - landing changes (propose/solidify), reading code by symbol, multi-agent coordination (announce, leases, try worktrees), tasks, bugs and the knowledge ledger, debugging, and the nool code agent harness. The full command reference is Commands.md beside this file.
+description: Expert guidance for the Nool CLI (v7.29.0) in any Nool-tracked repository - landing changes (propose/solidify), reading code by symbol, multi-agent coordination (announce, leases, try worktrees), tasks, bugs and the knowledge ledger, debugging, and the nool code agent harness. The full command reference is Commands.md beside this file.
 license: Apache-2.0
 metadata:
-  version: "7.28.0"
+  version: "7.29.0"
   author: nool-core-team
-compatibility: Requires nool CLI v7.28.0+
+compatibility: Requires nool CLI v7.29.0+
 allowed-tools: bash(nool *)
 ---
 
-# Nool CLI (v7.28.0)
+# Nool CLI (v7.29.0)
 
 Nool is a semantic version control system: the source of truth is the **Knot DAG**, not text, and every landed change is a signed **knot** mirrored to Git. In a Nool-tracked repository (confirm with `nool status`), use `nool` for version control, tasks, bugs and debugging instead of raw `git`; raw history-writing git verbs are refused there.
 
@@ -42,7 +42,7 @@ nool status --compact                                             # another agen
 nool announce intent --intent "<what>" --target-nodes <paths>   # declare what you touch
 nool discover conflicts <paths>                                   # exit 3 = someone else holds it: see below
 nool propose --path <file> [--path <file>…] --intent "<what>" --why "<why>" --solidify --detach   # prints <id> at once
-nool land wait <id>    # one verdict line + the landing's exit code; exit 3 = still running, run it again
+nool land wait <id>    # one verdict line + the landing's exit code; exit 3 = still running, run it again (a `refused (conflict…)` line: wait for the lease, then propose again)
 ```
 
 - **Single agent.** Keep the announcement: it is cheap, the propose lands under it, and the landing renews it while it queues. Without `--detach` the propose runs in the foreground and prints `✓ Landed knot <id>`.

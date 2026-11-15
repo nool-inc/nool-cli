@@ -4,6 +4,40 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.29.0] - 2026-11-15
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.29.0
+
+A reliability release: safer rewind and setup, fewer needless re-checks when agents add files, contract checks that follow HTTP calls, and many commands that now report what they actually did.
+
+### Added
+- **Antigravity CLI harness.** Fleet and agent builders run on the Antigravity CLI (`agy`) login as harness `antigravity-cli`; `gemini-cli` is still accepted as an older name.
+- **Contract drift follows HTTP calls.** A project's `fetch` and client-library calls are checked against its peer's routes.
+- **Documentation-only changes skip the build.** A proposal that touches only documentation lands in full mode without running the integrity driver; `[reification] doc_extensions` adds formats.
+
+### Changed
+- Filing an approval request pushes nothing unless `[approval] push` names a remote.
+- The agent-contract gate covers multi-file and binary proposals too.
+- `[rules] forbidden_paths` entries match as globs (`secrets/**`, `*.pem`) at the seal and in the pre-tool check.
+- The seal checks accepted entity-level `must_not_depend_on` assertions against the dependencies a change introduces, and names the `signature_present` rules it leaves to the push.
+- `nool validate --all` runs the project's tests when it settles `--fast` landings.
+- The git guard says only the user can lift it; a `NOOL_ALLOW_GIT=1` prefix inside the command does not.
+- A proposal that adds a new file is re-validated at the seal only when something the file imports, or its Go or Java package, changed in between, instead of on every concurrent landing. In a 10 to 50 agent benchmark, new-file revalidation fell from 27–75% to 0–25%.
+
+### Fixed
+- `nool rewind` refuses to overwrite unlanded work in the files it restores, and `--intent` finds landed intents, release versions and exact tags.
+- `nool init` edits an existing `nool.toml` in place, and its hint for recording `nool.toml` includes the required justification.
+- `nool init --from-git` records the knots it mints on this writer's own chain and imports nothing in a clone of a Nool repository; a clone pulls the author's imported history in one pull.
+- A `nool.toml` that does not parse, or whose `[branches]` patterns the branch commands reject, is refused at the seal; a bad playbook step spoils only that playbook.
+- A lease on another git branch no longer refuses a propose or seal that announce admitted.
+- A WASM policy that traps (out of fuel or memory) follows its `on_failure` setting instead of failing the propose.
+- Contract drift and change notices resolve projects found by convention; the first API change sealed after `nool init` sends change notices.
+- Test selection runs the full suite when the graph has files but no dependency edges, and failing tests are named from node's test runner and from jest outside a suite.
+- `nool debug bisect` tests the bad end first and never takes Nool's own record knots as candidates; `debug rerun` names every recorded constraint; `debug replay` errors on an unknown ref.
+- `nool diff` between two knots compares the files as of each knot; `nool why` shows the justification a change was accepted with, and `--depth N` walks N ancestor layers.
+- `nool solidify --local` makes no git commit, and `nool promote` accepts the short id it prints.
+- Merges, plans, remotes, handoffs, YAML rules, Codex session ids, and smaller fixes across `dag`, `findings`, `fleet`, `propose`, `pr summary`, `code doctor`, `branch check` and help text.
+
 ## [7.28.0] - 2026-11-13
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.28.0

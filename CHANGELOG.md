@@ -8,21 +8,17 @@ All notable changes to Nool are documented in this file.
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.30.0
 
-Verification you can audit: every landed change carries a signed verification verdict, agents can sign with their own attested keys, the hub's PR check refuses a stamp no independent verdict backs, and fleet plans see the work already in flight.
+Verification you can audit: every full-mode seal signs its own verification verdict, the hub's PR check refuses a landing no independent verdict backs, and fleet plans see the work already in flight.
 
 ### Added
-- **Signed verification verdicts.** Audit facts carry the seal's signed verification verdict; `nool audit verify` derives each knot's verdict from its author's integrity-driver attestations.
-- **Proof obligations.** Changes to `crates/**`, `Cargo.toml` and `Cargo.lock` need independent compile and unit-test verdicts.
-- **Attested agent keys.** `[identity] agents = "attested"` makes each agent session sign with its own attested key.
-- **Fleet plans around in-flight work.** `nool fleet plan --open` plans Open/Blocked tasks from every thread; InProgress/Claimed tasks appear as wave-0 occupants, overlapping tasks wave after them, `--run` never dispatches an occupant, and scopeless tasks are listed as unplanned.
-- CI attests every knot of a same-repository pull request, signing with a nool built from the default branch.
-- Hub: a replica target in the image, optional `worker_task_cpu`/`worker_task_memory` for the replica worker, and the GitHub App manifest in the repository.
+- **Signed verification verdicts.** A full-mode seal signs `compile` and `unit-tests` attestations by `integrity-driver` (a `--fast` seal signs a `syntax` precheck); `nool audit verify` takes each knot's verdict from them, and the commit's `Nool-Validation:` trailer must agree.
+- **`[attestation] skip_verification`.** A knot whose paths all match, none of them code and none under a proof obligation, is sealed `skipped-doc` with a signed attestation instead of a `validated` that nothing checked.
+- **Fleet plans around in-flight work.** `nool fleet plan --open` plans Open/Blocked tasks from every thread; Claimed/InProgress/InReview tasks and live leases are shown as in flight and never run, colliding tasks wave after them (deferred under `--run`), and scopeless tasks are listed as unplanned.
 
 ### Changed
-- The hub PR check requires a signed verification verdict behind the stamp and independently satisfied obligations; the verifier fetches detached chains.
-- Documentation-only knots (`docs/**`, `spec/**`, `README.md`, `CLAUDE.md`, `GEMINI.md`) skip verification.
-- The Stop hook holds a session while its claimed task's command acceptance criteria fail (at most 3 holds per task), and names claimed tasks past their holds.
-- `nool push` falls back to a plain push when the remote does not support `--atomic`.
+- The hub PR check passes only when every commit is a verified landing: a signed `validated` verdict (or an allowed `skipped-doc`) agreeing with the stamp, and every proof obligation on its paths met by a key other than the author's. It fetches detached chains to check.
+- The Stop hook holds a session while a task it claimed has a failing command acceptance criterion (at most 3 holds per task), then lets it stop and names the tasks it no longer holds.
+- `nool push` falls back to a plain push for a ref group when the remote does not support `--atomic`.
 
 ### Fixed
 - Reify trees and try worktree clones keep relative links (such as pnpm's `node_modules` symlinks) resolving.

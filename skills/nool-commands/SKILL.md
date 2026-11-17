@@ -1,15 +1,15 @@
 ---
 name: nool-commands
-description: Expert guidance for the Nool CLI (v7.29.0) in any Nool-tracked repository - landing changes (propose/solidify), reading code by symbol, multi-agent coordination (announce, leases, try worktrees), tasks, bugs and the knowledge ledger, debugging, and the nool code agent harness. The full command reference is Commands.md beside this file.
+description: Expert guidance for the Nool CLI (v7.30.0) in any Nool-tracked repository - landing changes (propose/solidify), reading code by symbol, multi-agent coordination (announce, leases, try worktrees), tasks, bugs and the knowledge ledger, debugging, and the nool code agent harness. The full command reference is Commands.md beside this file.
 license: Apache-2.0
 metadata:
-  version: "7.29.0"
+  version: "7.30.0"
   author: nool-core-team
-compatibility: Requires nool CLI v7.29.0+
+compatibility: Requires nool CLI v7.30.0+
 allowed-tools: bash(nool *)
 ---
 
-# Nool CLI (v7.29.0)
+# Nool CLI (v7.30.0)
 
 Nool is a semantic version control system: the source of truth is the **Knot DAG**, not text, and every landed change is a signed **knot** mirrored to Git. In a Nool-tracked repository (confirm with `nool status`), use `nool` for version control, tasks, bugs and debugging instead of raw `git`; raw history-writing git verbs are refused there.
 

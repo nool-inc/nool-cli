@@ -1,6 +1,6 @@
 # Nool Commands Reference
 
-**Version**: 7.29.0
+**Version**: 7.30.0
 
 This document is a command reference for the Nool CLI, organized by skill category. For narrative guidance, see the companion `SKILL.md`.
 
@@ -867,4 +867,4 @@ Claude Code-format skills, hooks and agent definitions, managed for `nool code` 
 
 ---
 
-*Last updated: November 15, 2026 for Nool v7.29.0*
+*Last updated: November 17, 2026 for Nool v7.30.0*

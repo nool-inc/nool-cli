@@ -4,6 +4,31 @@ All notable changes to Nool are documented in this file.
 
 ## [Unreleased]
 
+## [7.30.0] - 2026-11-17
+
+Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.30.0
+
+Verification you can audit: every landed change carries a signed verification verdict, agents can sign with their own attested keys, the hub's PR check refuses a stamp no independent verdict backs, and fleet plans see the work already in flight.
+
+### Added
+- **Signed verification verdicts.** Audit facts carry the seal's signed verification verdict; `nool audit verify` derives each knot's verdict from its author's integrity-driver attestations.
+- **Proof obligations.** Changes to `crates/**`, `Cargo.toml` and `Cargo.lock` need independent compile and unit-test verdicts.
+- **Attested agent keys.** `[identity] agents = "attested"` makes each agent session sign with its own attested key.
+- **Fleet plans around in-flight work.** `nool fleet plan --open` plans Open/Blocked tasks from every thread; InProgress/Claimed tasks appear as wave-0 occupants, overlapping tasks wave after them, `--run` never dispatches an occupant, and scopeless tasks are listed as unplanned.
+- CI attests every knot of a same-repository pull request, signing with a nool built from the default branch.
+- Hub: a replica target in the image, optional `worker_task_cpu`/`worker_task_memory` for the replica worker, and the GitHub App manifest in the repository.
+
+### Changed
+- The hub PR check requires a signed verification verdict behind the stamp and independently satisfied obligations; the verifier fetches detached chains.
+- Documentation-only knots (`docs/**`, `spec/**`, `README.md`, `CLAUDE.md`, `GEMINI.md`) skip verification.
+- The Stop hook holds a session while its claimed task's command acceptance criteria fail (at most 3 holds per task), and names claimed tasks past their holds.
+- `nool push` falls back to a plain push when the remote does not support `--atomic`.
+
+### Fixed
+- Reify trees and try worktree clones keep relative links (such as pnpm's `node_modules` symlinks) resolving.
+- The Swift precheck accepts `??` after an `as?` cast.
+- The hub's GitHub App token mint sends a User-Agent and reports non-JSON refusals with their HTTP status.
+
 ## [7.29.0] - 2026-11-15
 
 Binaries: https://github.com/nool-inc/nool-cli/releases/tag/v7.29.0
